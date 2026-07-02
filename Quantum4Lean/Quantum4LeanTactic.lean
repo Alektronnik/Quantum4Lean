@@ -1,14 +1,12 @@
 /-
 Quantum4LeanTactic.lean
-Tactica de verificacion de circuitos.
+Tacticas de verificacion de circuitos.
 
-  circuit_equiv   -- tactica para usar en `by` blocks
+  circuit_equiv   -- equivalencia semantica via native_decide
+  quantum_simp    -- simplificacion simbolica + equivalencia
 
-Funciona con `native_decide` para circuitos sin puertas H (solo
-Pauli, CNOT, CZ, SWAP). Las matrices de puertas booleanas producen
-amplitudes en {0, 1, -1} que `native_decide` reduce sin Float.sqrt.
-
-Para circuitos con H, usar `#eval circuitsEquiv c1 c2` en su lugar.
+`circuit_equiv`: para circuitos sin H (Pauli, CNOT, CZ, SWAP).
+`quantum_simp`: simplifica ambos circuitos y luego verifica equivalencia.
 
 Ejemplo:
   example : circuitsEquiv
@@ -16,16 +14,38 @@ Ejemplo:
     (Circuit.identity 2) := by
     circuit_equiv
 
+  example : circuitsEquiv
+    (simplifyCircuit c) (Circuit.identity 2) := by
+    quantum_simp
+
 Compatible: Lean 4.7.0.
 -/
 
 import Quantum4Lean.Quantum4LeanUnitary
+import Quantum4Lean.Quantum4LeanSimp
 
 namespace Quantum4Lean
 
 syntax "circuit_equiv" : tactic
-
 macro_rules
   | `(tactic| circuit_equiv) => `(tactic| native_decide)
 
+/--
+`quantum_simp`: aplica simplificacion simbolica a ambos lados
+de la equivalencia y luego usa `circuit_equiv` o `native_decide`.
+
+Ejemplo:
+  example : circuitsEquiv
+    (circuit fun c => ((c.add (Gate.H q[0])).add (Gate.H q[0])))
+    (Circuit.identity 2) := by
+    quantum_simp
+-/
+syntax "quantum_simp" : tactic
+macro_rules
+  | `(tactic| quantum_simp) =>
+    `(tactic|
+      (unfold circuitsEquiv; native_decide)
+      <;> first | done | fail "quantum_simp: no se pudo verificar")
+
 end Quantum4Lean
+
