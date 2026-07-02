@@ -20,7 +20,7 @@ package «Quantum4Lean» where
 
 @[default_target]
 lean_lib «Quantum4Lean» where
-  roots := #[`Quantum4Lean, `Quantum4LeanPlayground]
+  roots := #[`Quantum4Lean]
 
 /--
 Ejecutable de validacion: tests unitarios + fuzzer.
