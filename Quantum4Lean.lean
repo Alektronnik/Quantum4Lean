@@ -33,6 +33,8 @@ import Quantum4Lean.Quantum4LeanUnitary
 import Quantum4Lean.Quantum4LeanObservable
 import Quantum4Lean.Quantum4LeanVQE
 import Quantum4Lean.Quantum4LeanQAOA
+import Quantum4Lean.Quantum4LeanDSL
+import Quantum4Lean.Quantum4LeanTactic
 
 export Quantum4Lean (Qubit Gate Circuit StateVector
   executeSim executeSimProbs
@@ -42,3 +44,5 @@ export Quantum4Lean (Qubit Gate Circuit StateVector
   expect expectPauliString expectZ expectX expectY
   vqe isingAnsatz gradient parameterShiftGradient
   qaoaIsing qaoaIsingCircuit qaoaMixingLayer)
+
+-- DSL y tacticas disponibles via `import Quantum4Lean` automaticamente
