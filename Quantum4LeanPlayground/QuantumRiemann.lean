@@ -32,7 +32,7 @@ Compatible: Lean 4.7.0, build autocontenido.
 
 import Quantum4Lean
 
-namespace Quantum4Lean.Tools.Riemann
+namespace Quantum4Lean.Playground.Riemann
 
 -- ===================================================================
 -- Primos y gaps
@@ -230,4 +230,4 @@ def report : String :=
   ) info
   header ++ info
 
-end Quantum4Lean.Tools.Riemann
+end Quantum4Lean.Playground.Riemann

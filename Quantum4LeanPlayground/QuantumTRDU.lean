@@ -28,7 +28,7 @@ Compatible: Lean 4.7.0, build autocontenido.
 
 import Quantum4Lean
 
-namespace Quantum4Lean.Tools.TRDU
+namespace Quantum4Lean.Playground.TRDU
 
 -- ===================================================================
 -- Funcion F(δ) -- nucleo de la TRDU
@@ -199,4 +199,4 @@ def report : String :=
   ) ""
   hdr ++ body
 
-end Quantum4Lean.Tools.TRDU
+end Quantum4Lean.Playground.TRDU
