@@ -2,7 +2,7 @@
 
 Computacion cuantica verificada en Lean 4. Motor puro-Lean bit-exacto con CoreQU4TRIX (C++/Metal). Stack NISQ completo: StateVector, Observables, VQE, QAOA. DSL declarativo, tactica `circuit_equiv` y fuzzer intra-Lean.
 
-Estado: v0.4.0 -- 16 modulos activos, build autocontenido, 224 tests (208 fuzz + 16 teoremas).
+Estado: v0.5.0 -- 17 modulos activos, build autocontenido, 224 tests (208 fuzz + 16 teoremas).
 
 ## Build
 
@@ -18,12 +18,17 @@ Cero dependencias externas. Solo requiere Lean 4 (v4.7.0).
 ```
                     Quantum4Lean.lean (modulo principal)
                             |
-    +-------+-------+-------+-------+-------+-------+-------+-------+
-    |       |       |       |       |       |       |       |       |
-   Core   Error  Engine  Fuzz  Unitary  Obs    VQE    QAOA  Diophantine
+    +-------+-------+-------+-------+-------+-------+-------+-------+-------+
+    |       |       |       |       |       |       |       |       |       |
+   Core   Error  Engine  Fuzz  Unitary  Obs    VQE    QAOA  Diophantine  Polynomial
                                                     (Ising)
     |       |       |       |
    DSL   Tactic   Simp  Transpile  Clifford
+
+Quantum4LeanPlayground/          -- Demostraciones avanzadas
++-- QuantumTijdeman.lean          -- Tijdeman cuantico
++-- QuantumRiemann.lean           -- Riemann + Cuantica
++-- QuantumTRDU.lean              -- TRDU-Q
 ```
 
 ## Uso rapido
@@ -69,6 +74,7 @@ example : circuitsEquiv
 | DSL | `circuit\! { ... }`, `q[i]`, `H`, `X`, `CNOT`, ... (Shortcuts) |
 | Fuzzer | `FuzzConfig`, `FuzzReport`, `runFullSuite`, `reportToString` |
 | Diofantico | `Diophantine`, `toIsing`, `diophantineSolve`, `checkSolution` |
+| Polinomico | `Monomial`, `PolyEquation`, `polyToIsing`, `expandVarPower` |
 
 ## DSL
 
@@ -117,12 +123,11 @@ theorem rule_X_X_eq_I : cliffordEquiv c (Circuit.identity 2) := by
 
 ## Traductor Diofantino
 
-Convierte ecuaciones diofantinas lineales (ax + by = c) en Hamiltonianos de Ising resolubles via QAOA.
+Ecuaciones diofantinas lineales (ax + by = c) a Hamiltonianos de Ising.
 
 ```lean
 import Quantum4Lean
 
--- Definir ecuacion: 3x + 5y = 22
 let eq : Diophantine := {
   vars := [
     { coeff := 3, name := "x", bits := 4 },
@@ -131,14 +136,43 @@ let eq : Diophantine := {
   constant := 22
 }
 
--- Convertir a Hamiltoniano Ising
 let H := toIsing eq 4
-
--- Resolver via QAOA
 let result := diophantineSolve eq 4
-
--- Verificar solucion
 #eval checkSolution eq [("x", 4), ("y", 2)]  -- true (3*4 + 5*2 = 22)
+```
+
+## Traductor Polinomico
+
+Generaliza el traductor lineal a monomios con exponentes <= 3.
+Soporta ecuaciones como x^2 = y^3 + 1 (Tijdeman).
+
+```lean
+import Quantum4Lean
+
+-- Ecuacion: x^2 - y^3 = 1
+let eq : PolyEquation := {
+  monomials := [
+    { coefficient := 1,  exponents := [(0, 2)] },
+    { coefficient := -1, exponents := [(1, 3)] }
+  ],
+  constant := 1,
+  varBits := [4, 4]
+}
+
+let H := polyToIsing eq    -- Observable Ising
+let n := polyTotalQubits eq -- 8 qubits
+```
+
+## Playground
+
+Demostraciones avanzadas que extienden la libreria. Import independiente:
+
+```lean
+import Quantum4LeanPlayground
+
+#eval Quantum4LeanPlayground.Tijdeman.report
+-- Tijdeman cuantico: x^2 = y^3 + 1 via QAOA. Validado contra
+-- demostracion formal (ABC_Formal_Enhanced.lean, 9/9 casos).
 ```
 
 ## Fuzzer
@@ -180,8 +214,14 @@ Quantum4Lean/
 |   +-- Quantum4LeanTranspile.lean -- Transpilador (8 teoremas)
 |   +-- Quantum4LeanClifford.lean  -- Verificacion Clifford (Z[i])
 |   +-- Quantum4LeanDiophantine.lean-- Traductor Diofantino
+|   +-- Quantum4LeanPolynomial.lean -- Traductor Polinomico
 |   +-- Quantum4LeanRunner.lean    -- Ejecutable de tests
 |   +-- (7 modulos conservados)
++-- Quantum4LeanPlayground.lean    -- Root del Playground
++-- Quantum4LeanPlayground/
+|   +-- QuantumTijdeman.lean       -- Tijdeman cuantico
+|   +-- QuantumRiemann.lean        -- Resonancia de Riemann
+|   +-- QuantumTRDU.lean           -- TRDU-Q
 +-- .github/workflows/ci.yml       -- CI
 +-- README.md
 +-- MANUAL.md
