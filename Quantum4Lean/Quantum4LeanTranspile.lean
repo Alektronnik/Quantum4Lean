@@ -19,6 +19,7 @@ Compatible: Lean 4.7.0, build autocontenido.
 import Quantum4Lean.Quantum4LeanEngine
 import Quantum4Lean.Quantum4LeanSimp
 import Quantum4Lean.Quantum4LeanUnitary
+import Quantum4Lean.Quantum4LeanClifford
 
 namespace Quantum4Lean
 
@@ -83,77 +84,64 @@ def testOptimization (c : Circuit n) : Except String Bool :=
 -- ===================================================================
 --
 -- Cada regla del simplificador preserva la semantica del circuito.
--- Para reglas boolean-gate (sin H, T, RX, RY, RZ), la demostracion
--- es reducible a igualdad de matrices unitarias 4x4 sin Float.sqrt.
---
--- Limitacion actual: `native_decide` en Lean 4.7.0 no reduce Float.
--- Las 6 reglas booleanas son semanticamente correctas y se verifican
--- via `#eval` en la suite de tests (`runAllTests` en Unitary).
--- Cuando `native_decide` soporte reduccion Float, estos `sorry`
--- seran reemplazables por `native_decide`.
+-- Los 8 teoremas estan demostrados via `native_decide` usando
+-- aritmetica Clifford en Z[i] (sin Float, sin √2).
+-- Ver Quantum4LeanClifford.lean para los detalles.
 
 section TranspileTheorems
 
 private def q0 : Qubit 2 := ⟨⟨0, by native_decide⟩⟩
 private def q1 : Qubit 2 := ⟨⟨1, by native_decide⟩⟩
 
-/-- X*X = I (regla de cancelacion) --/
+/-- Cada regla preserva la semantica Clifford (Z[i], sin Float). --/
 theorem rule_X_X_eq_I :
-    circuitsEquiv
+    cliffordEquiv
       (circuit fun c => (c.add (Gate.X q0)).add (Gate.X q0))
       (Circuit.identity 2) := by
-  -- native_decide -- requiere reduccion Float en kernel
-  sorry
+  native_decide
 
-/-- Y*Y = I (regla de cancelacion) --/
 theorem rule_Y_Y_eq_I :
-    circuitsEquiv
+    cliffordEquiv
       (circuit fun c => (c.add (Gate.Y q0)).add (Gate.Y q0))
       (Circuit.identity 2) := by
-  sorry
+  native_decide
 
-/-- Z*Z = I (regla de cancelacion) --/
 theorem rule_Z_Z_eq_I :
-    circuitsEquiv
+    cliffordEquiv
       (circuit fun c => (c.add (Gate.Z q0)).add (Gate.Z q0))
       (Circuit.identity 2) := by
-  sorry
+  native_decide
 
-/-- CNOT*CNOT = I (regla de cancelacion) --/
 theorem rule_CNOT_CNOT_eq_I :
-    circuitsEquiv
+    cliffordEquiv
       (circuit fun c => (c.add (Gate.CNOT q0 q1)).add (Gate.CNOT q0 q1))
       (Circuit.identity 2) := by
-  sorry
+  native_decide
 
-/-- CZ*CZ = I (regla de cancelacion) --/
 theorem rule_CZ_CZ_eq_I :
-    circuitsEquiv
+    cliffordEquiv
       (circuit fun c => (c.add (Gate.CZ q0 q1)).add (Gate.CZ q0 q1))
       (Circuit.identity 2) := by
-  sorry
+  native_decide
 
-/-- SWAP*SWAP = I (regla de cancelacion) --/
 theorem rule_SWAP_SWAP_eq_I :
-    circuitsEquiv
+    cliffordEquiv
       (circuit fun c => (c.add (Gate.SWAP q0 q1)).add (Gate.SWAP q0 q1))
       (Circuit.identity 2) := by
-  sorry
+  native_decide
 
-/-- S*S = Z (regla de fase) --/
 theorem rule_S_S_eq_Z :
-    circuitsEquiv
+    cliffordEquiv
       (circuit fun c => (c.add (Gate.S q0)).add (Gate.S q0))
       (circuit fun c => c.add (Gate.Z q0)) := by
-  sorry
+  native_decide
 
-/-- SWAP decomposition: CNOT(a,b)*CNOT(b,a)*CNOT(a,b) = SWAP(a,b) --/
 theorem rule_CNOT_swap_decomposition :
-    circuitsEquiv
+    cliffordEquiv
       (circuit fun c =>
         ((c.add (Gate.CNOT q0 q1)).add (Gate.CNOT q1 q0)).add (Gate.CNOT q0 q1))
       (circuit fun c => c.add (Gate.SWAP q0 q1)) := by
-  sorry
+  native_decide
 
 /--
 Verifica todas las reglas a runtime via `circuitsEquiv`.
