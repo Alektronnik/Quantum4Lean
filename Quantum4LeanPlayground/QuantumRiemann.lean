@@ -114,7 +114,8 @@ def step1stVolcanic (n : Nat) (dt : Float) (alpha : Float) (d2g : List Int) : Ci
   let gatesZZ := (List.range (n - 1)).bind fun i =>
     (applyZZ n i dt).gates
   let gatesX := (List.range n).bind fun i =>
-    let h_i := alpha * (if i < d2g.length then (if d2g.get! i >= 0 then d2g.get! i else -d2g.get! i).toFloat else 0.0)
+    let absVal := if d2g.get! i >= 0 then d2g.get! i else -d2g.get! i
+    let h_i := alpha * (if i < d2g.length then absVal.toNat.toFloat else 0.0)
     (applyX n i (h_i * dt)).gates
   { gates := gatesZZ ++ gatesX }
 
@@ -126,7 +127,8 @@ def step2ndVolcanic (n : Nat) (dt : Float) (alpha : Float) (d2g : List Int) : Ci
   let half := dt / 2.0
   let gatesZZ1 := (List.range (n - 1)).bind fun i => (applyZZ n i half).gates
   let gatesX := (List.range n).bind fun i =>
-    let h_i := alpha * (if i < d2g.length then (if d2g.get! i >= 0 then d2g.get! i else -d2g.get! i).toFloat else 0.0)
+    let absVal := if d2g.get! i >= 0 then d2g.get! i else -d2g.get! i
+    let h_i := alpha * (if i < d2g.length then absVal.toNat.toFloat else 0.0)
     (applyX n i (h_i * dt)).gates
   let gatesZZ2 := (List.range (n - 1)).bind fun i => (applyZZ n i half).gates
   { gates := gatesZZ1 ++ gatesX ++ gatesZZ2 }

@@ -16,7 +16,7 @@ v0.4.0. Julio 2026.
 10. [Verificacion Semantica](#10-verificacion-semantica)
 11. [Simplificador y Transpilador](#11-simplificador-y-transpilador)
 12. [Fuzzer Intra-Lean](#12-fuzzer-intra-lean)
-13. [Playground](#13-playground)
+13. [Traductor Diofantino](#13-traductor-diofantino)
 14. [API de Referencia](#14-api-de-referencia)
 15. [Arquitectura del Proyecto](#15-arquitectura-del-proyecto)
 
@@ -28,6 +28,7 @@ Quantum4Lean es una plataforma de computacion cuantica verificada en Lean 4. Pro
 
 - **Motor de simulacion puro-Lean** bit-exacto con CoreQU4TRIX (C++/Metal)
 - **Stack NISQ completo**: StateVector, Observables, VQE, QAOA
+- **Traductor diofantino**: convierte ecuaciones lineales en Hamiltonianos Ising
 - **Verificacion formal**: matrices unitarias, equivalencia semantica, tacticas
 - **Simplificador simbolico**: reescritura de circuitos sobre el AST (N arbitrario)
 - **Transpilador verificado**: optimizacion con preservacion de semantica
@@ -574,29 +575,62 @@ let report := runFullSuite cfg
 
 ---
 
-## 13. Playground
+## 13. Traductor Diofantino
 
-Demostraciones avanzadas que muestran capacidades unicas de Quantum4Lean.
-Los modulos del Playground se importan explicitamente (no se cargan con `import Quantum4Lean`).
+Convierte ecuaciones diofantinas lineales en Hamiltonianos de Ising para resolucion via QAOA.
+
+### Motivacion
+
+Dada una ecuacion $ax + by = c$ con variables enteras, el problema de encontrar soluciones es NP-completo. Quantum4Lean codifica cada variable en $b$ bits y minimiza el funcional de coste:
+
+$$C(x,y) = (ax + by - c)^2 = \sum_i \alpha_i Z_i + \sum_{i<j} \beta_{ij} Z_i Z_j$$
+
+Este Hamiltoniano Ising es directamente optimizable con QAOA.
+
+### Uso
 
 ```lean
-import Quantum4LeanPlayground
+import Quantum4Lean
 
-#eval Quantum4Lean.Playground.Riemann.report
-#eval Quantum4Lean.Playground.TRDU.report
+-- Ecuacion: 3x + 5y = 22
+let eq : Diophantine := {
+  vars := [
+    { coeff := 3, name := "x", bits := 4 },
+    { coeff := 5, name := "y", bits := 4 }
+  ],
+  constant := 22
+}
+
+-- Convertir a Hamiltoniano Ising (8 qubits: 4 para x, 4 para y)
+let H := toIsing eq 4
+
+-- Resolver via QAOA (p=1 capa, lr=0.05, 100 iteraciones)
+let result := diophantineSolve eq 4
+
+-- Verificar manualmente
+#eval checkSolution eq [("x", 4), ("y", 2)]
+-- true  (3*4 + 5*2 = 12 + 10 = 22)
 ```
 
-### Resonancia de Riemann
+### Algoritmo
 
-Fusiona gaps de primos con dinamica cuantica de espines:
+| Paso | Descripcion |
+|------|-------------|
+| `toIsing` | Expande $(ax+by-c)^2$ en terminos Pauli Z |
+| Terminos lineales | $c \cdot a \cdot 2^j \cdot Z_j$ por cada bit |
+| Terminos diagonales | $a^2 \cdot 2^{j+l-1} \cdot Z_j Z_l$ (misma variable, $j<l$) |
+| Terminos cruzados | $a_i a_k \cdot 2^{j+l-1} \cdot Z_j Z_l$ (distintas variables) |
+| `diophantineSolve` | Optimiza el Hamiltoniano via QAOA |
 
-El Hamiltoniano $H = J \sum Z_i Z_{i+1} + \alpha \sum (\Delta^2 g_i) X_i$ usa las segundas diferencias de gaps primos como campos magneticos. Suzuki 2o orden preserva la coherencia del gato GHZ donde Trotter 1er orden colapsa.
+### API
 
-### TRDU-Q
-
-Fidelidad de eco cuantico vs exceso dimensional $\delta$.
-
-Maxima estabilidad coherente en $\delta_{opt} = 5/3$ ($F \approx 58.97$). La funcion $F(\delta)$ es la densidad de complejidad proyectada de la Teoria de Resonancia Dimensional Unificada.
+| Funcion | Descripcion |
+|---------|-------------|
+| `Diophantine` | Ecuacion (vars + constante) |
+| `toIsing eq bitsPerVar` | Observable Ising |
+| `diophantineSolve eq bitsPerVar` | Resultado QAOA |
+| `checkSolution eq values` | Verifica solucion |
+| `decodeValues eq bitsPerVar sv` | Decodifica StateVector |
 
 ---
 
@@ -619,6 +653,9 @@ Maxima estabilidad coherente en $\delta_{opt} = 5/3$ ($F \approx 58.97$). La fun
 | `Observable` | Suma ponderada de PauliStrings |
 | `FuzzConfig` | Configuracion del fuzzer |
 | `FuzzReport` | Resultado del fuzzer |
+| `Diophantine` | Ecuacion diofantina (vars + constante) |
+| `DiophantineVar` | Variable diofantina (coeff, nombre, bits) |
+| `DiophantineResult` | Resultado de optimizacion |
 
 ### Ejecucion
 
@@ -711,6 +748,15 @@ Todas las funciones estan en el namespace principal (`Quantum4Lean`). No requier
 | `testPauliAlgebra` | XZ vs ZX |
 | `fuzzRandomCircuits cfg` | Circuitos aleatorios |
 
+### Diofantico
+
+| Funcion | Descripcion |
+|---------|-------------|
+| `toIsing eq bitsPerVar` | Ecuacion -> Observable Ising |
+| `diophantineSolve eq bitsPerVar` | Resolver via QAOA |
+| `checkSolution eq values` | Verificar solucion |
+| `decodeValues eq bitsPerVar sv` | StateVector -> valores |
+
 ### Tacticas
 
 Disponibles tras `import Quantum4Lean`. No requieren `open`.
@@ -741,13 +787,9 @@ Quantum4Lean/
 |   +-- Quantum4LeanFuzz.lean      -- Fuzzer intra-Lean
 |   +-- Quantum4LeanDSL.lean       -- Macro circuit!, q[i], Shortcuts
 |   +-- Quantum4LeanTactic.lean    -- circuit_equiv, quantum_simp
+|   +-- Quantum4LeanDiophantine.lean-- Traductor Diofantino
 |   +-- Quantum4LeanRunner.lean    -- Ejecutable de tests
 |   +-- (8 modulos conservados)    -- FFI, Monad, Compile, Sim, etc.
-+-- Quantum4LeanPlayground/
-|   +-- Quantum4LeanPlayground.lean-- Modulo principal del Playground
-|   +-- QuantumRiemann.lean        -- Resonancia de Riemann
-|   +-- QuantumTRDU.lean           -- TRDU-Q
-+-- Quantum4LeanBridge/            -- Puente C (opcional)
 +-- .github/workflows/ci.yml       -- Integracion Continua
 +-- lakefile.lean                  -- Build autocontenido
 +-- README.md                      -- Documentacion

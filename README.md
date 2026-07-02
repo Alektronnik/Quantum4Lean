@@ -2,7 +2,7 @@
 
 Computacion cuantica verificada en Lean 4. Motor puro-Lean bit-exacto con CoreQU4TRIX (C++/Metal). Stack NISQ completo: StateVector, Observables, VQE, QAOA. DSL declarativo, tactica `circuit_equiv` y fuzzer intra-Lean.
 
-Estado: v0.4.0 -- 14 modulos activos, build autocontenido, 208 tests.
+Estado: v0.4.0 -- 16 modulos activos, build autocontenido, 224 tests (208 fuzz + 16 teoremas).
 
 ## Build
 
@@ -18,16 +18,12 @@ Cero dependencias externas. Solo requiere Lean 4 (v4.7.0).
 ```
                     Quantum4Lean.lean (modulo principal)
                             |
-    +-------+-------+-------+-------+-------+-------+-------+
-    |       |       |       |       |       |       |       |
-   Core   Error  Engine  Fuzz  Unitary  Obs    VQE    QAOA
+    +-------+-------+-------+-------+-------+-------+-------+-------+
+    |       |       |       |       |       |       |       |       |
+   Core   Error  Engine  Fuzz  Unitary  Obs    VQE    QAOA  Diophantine
                                                     (Ising)
     |       |       |       |
    DSL   Tactic   Simp  Transpile  Clifford
-
-Quantum4LeanPlayground/          -- Demostraciones avanzadas
-+-- QuantumRiemann.lean          -- Riemann + Cuantica
-+-- QuantumTRDU.lean             -- TRDU-Q
 ```
 
 ## Uso rapido
@@ -67,9 +63,12 @@ example : circuitsEquiv
 | Expectacion | `expect`, `expectPauliString`, `expectZ`, `expectX`, `expectY` |
 | VQE | `vqe`, `isingAnsatz`, `gradient`, `parameterShiftGradient` |
 | QAOA | `qaoaIsing`, `qaoaIsingCircuit`, `qaoaMixingLayer` |
-| Verificacion | `compile`, `circuitsEquiv`, `circuit_equiv` (tactica) || Clifford | `cliffordEquiv`, `CliffordAmplitude`, `CliffordMatrix` |
-| Optimizacion | `simplifyCircuit`, `optimizeCircuit`, `verifyOptimization` || DSL | `circuit\! { ... }`, `q[i]`, `H`, `X`, `CNOT`, ... (Shortcuts) |
+| Verificacion | `compile`, `circuitsEquiv`, `circuit_equiv` (tactica) |
+| Clifford | `cliffordEquiv`, `CliffordAmplitude`, `CliffordMatrix` |
+| Optimizacion | `simplifyCircuit`, `optimizeCircuit`, `verifyOptimization` |
+| DSL | `circuit\! { ... }`, `q[i]`, `H`, `X`, `CNOT`, ... (Shortcuts) |
 | Fuzzer | `FuzzConfig`, `FuzzReport`, `runFullSuite`, `reportToString` |
+| Diofantico | `Diophantine`, `toIsing`, `diophantineSolve`, `checkSolution` |
 
 ## DSL
 
@@ -116,23 +115,37 @@ theorem rule_X_X_eq_I : cliffordEquiv c (Circuit.identity 2) := by
 #eval cliffordEquiv miCircuito otroCircuito
 ```
 
+## Traductor Diofantino
+
+Convierte ecuaciones diofantinas lineales (ax + by = c) en Hamiltonianos de Ising resolubles via QAOA.
+
+```lean
+import Quantum4Lean
+
+-- Definir ecuacion: 3x + 5y = 22
+let eq : Diophantine := {
+  vars := [
+    { coeff := 3, name := "x", bits := 4 },
+    { coeff := 5, name := "y", bits := 4 }
+  ],
+  constant := 22
+}
+
+-- Convertir a Hamiltoniano Ising
+let H := toIsing eq 4
+
+-- Resolver via QAOA
+let result := diophantineSolve eq 4
+
+-- Verificar solucion
+#eval checkSolution eq [("x", 4), ("y", 2)]  -- true (3*4 + 5*2 = 22)
+```
+
 ## Fuzzer
 
 ```lean
 #eval runFullSuite { maxQubits := 5, numCircuits := 200 }
 #eval reportToString (runFullSuite { numCircuits := 100 })
-```
-
-## Playground
-
-```lean
-import Quantum4LeanPlayground
-
-#eval Quantum4Lean.Playground.Riemann.report
--- Resonancia de Riemann: gaps de primos + dinamica cuantica
-
-#eval Quantum4Lean.Playground.TRDU.report
--- TRDU-Q: fidelidad de eco vs exceso dimensional
 ```
 
 ## Bit-exactness con CoreQU4TRIX
@@ -166,13 +179,9 @@ Quantum4Lean/
 |   +-- Quantum4LeanSimp.lean      -- Simplificador (12 reglas)
 |   +-- Quantum4LeanTranspile.lean -- Transpilador (8 teoremas)
 |   +-- Quantum4LeanClifford.lean  -- Verificacion Clifford (Z[i])
+|   +-- Quantum4LeanDiophantine.lean-- Traductor Diofantino
 |   +-- Quantum4LeanRunner.lean    -- Ejecutable de tests
 |   +-- (7 modulos conservados)
-+-- Quantum4LeanPlayground/
-|   +-- Quantum4LeanPlayground.lean-- Modulo del Playground
-|   +-- QuantumRiemann.lean        -- Resonancia de Riemann
-|   +-- QuantumTRDU.lean           -- TRDU-Q
-+-- Quantum4LeanBridge/            -- Puente C (opcional)
 +-- .github/workflows/ci.yml       -- CI
 +-- README.md
 +-- MANUAL.md
