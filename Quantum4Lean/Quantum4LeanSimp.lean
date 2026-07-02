@@ -130,13 +130,62 @@ private def tryTT (a b : Gate n) : Option (Gate n) :=
 
 /--
 Intenta conmutar dos puertas adyacentes si operan en qubits disjuntos.
-Devuelve la lista con el orden intercambiado.
 -/
 private def tryCommute (a b : Gate n) : Option (List (Gate n)) :=
   if commuteQ a b && !sameQubits a b then
     some [b, a]
   else
     none
+
+-- ===================================================================
+-- CNOT propagation (Hadamard sandwich -> CZ)
+-- ===================================================================
+
+/-- H(t)*CNOT(c,t)*H(t) = CZ(c,t) --/
+private def tryHCNOTH (a b c : Gate n) : Option (Gate n) :=
+  match a, b, c with
+  | .H qh1, .CNOT qc qt, .H qh2 =>
+    if qh1.idx.val == qt.idx.val && qh2.idx.val == qt.idx.val then
+      some (.CZ qc qh1)
+    else none
+  | _, _, _ => none
+
+/-- H(c)*CNOT(c,t)*H(c) = CZ(t,c) --/
+private def tryHCNOTHCtrl (a b c : Gate n) : Option (Gate n) :=
+  match a, b, c with
+  | .H qh1, .CNOT qc qt, .H qh2 =>
+    if qh1.idx.val == qc.idx.val && qh2.idx.val == qc.idx.val then
+      some (.CZ qt qh1)
+    else none
+  | _, _, _ => none
+
+/-- CNOT(a,b)*CNOT(a,c) = CNOT(a,c)*CNOT(a,b) cuando b≠c (target commutation) --/
+private def tryCNOTTargetCommute (a b : Gate n) : Option (List (Gate n)) :=
+  match a, b with
+  | .CNOT c1 t1, .CNOT c2 t2 =>
+    if c1.idx.val == c2.idx.val && t1.idx.val ≠ t2.idx.val then
+      some [b, a]
+    else none
+  | _, _ => none
+
+/-- CNOT(a,b)*CNOT(c,b) = CNOT(c,b)*CNOT(a,b) cuando a≠c (control commutation) --/
+private def tryCNOTControlCommute (a b : Gate n) : Option (List (Gate n)) :=
+  match a, b with
+  | .CNOT c1 t1, .CNOT c2 t2 =>
+    if t1.idx.val == t2.idx.val && c1.idx.val ≠ c2.idx.val then
+      some [b, a]
+    else none
+  | _, _ => none
+
+/-- SWAP decomposition: CNOT(a,b)*CNOT(b,a)*CNOT(a,b) = SWAP(a,b) --/
+private def tryCNOTSwapDecomp (a b c : Gate n) : Option (Gate n) :=
+  match a, b, c with
+  | .CNOT c1 t1, .CNOT c2 t2, .CNOT c3 t3 =>
+    if c1.idx.val == t2.idx.val && t1.idx.val == c2.idx.val
+    && c1.idx.val == c3.idx.val && t1.idx.val == t3.idx.val then
+      some (.SWAP c1 t1)
+    else none
+  | _, _, _ => none
 
 -- ===================================================================
 -- Simplificador principal
@@ -159,17 +208,33 @@ partial def simplifyPass (gates : List (Gate n)) : List (Gate n) :=
       match tryTT a b with
       | some g => simplifyPass (g :: rest)
       | none =>
+        -- CNOT commutation + general commutation
+        match tryCNOTTargetCommute a b with
+        | some [g1, g2] => g2 :: simplifyPass (g1 :: rest)
+        | _ =>
+        match tryCNOTControlCommute a b with
+        | some [g1, g2] => g2 :: simplifyPass (g1 :: rest)
+        | _ =>
         match tryCommute a b with
-        | some [b', a'] => a' :: simplifyPass (b' :: rest)
+        | some [g1, g2] => g2 :: simplifyPass (g1 :: rest)
         | _ =>
           match rest with
           | c :: rest' =>
             match tryHXH a b c with
             | some g => simplifyPass (g :: rest')
             | none =>
-              match tryHZH a b c with
-              | some g => simplifyPass (g :: rest')
-              | none => a :: simplifyPass (b :: rest)
+            match tryHZH a b c with
+            | some g => simplifyPass (g :: rest')
+            | none =>
+            match tryHCNOTH a b c with
+            | some g => simplifyPass (g :: rest')
+            | none =>
+            match tryHCNOTHCtrl a b c with
+            | some g => simplifyPass (g :: rest')
+            | none =>
+            match tryCNOTSwapDecomp a b c with
+            | some g => simplifyPass (g :: rest')
+            | none => a :: simplifyPass (b :: rest)
           | [] => a :: simplifyPass (b :: rest)
 
 /-- Compara dos listas de puertas elemento a elemento con gateEq. --/
