@@ -1,201 +1,151 @@
 # Quantum4Lean
 
-Computacion cuantica verificada en Lean 4. Motor puro-Lean bit-exacto con CoreQU4TRIX (C++/Metal), fuzzer intra-Lean, y puente FFI opcional a Apple Silicon.
+Computacion cuantica verificada en Lean 4. Motor puro-Lean bit-exacto con CoreQU4TRIX (C++/Metal). Stack NISQ completo: StateVector, Observables, VQE, QAOA. DSL declarativo, tactica `circuit_equiv` y fuzzer intra-Lean.
 
-Estado: v0.3 -- build autocontenido, 5 modulos activos, fuzzer integrado.
+Estado: v0.4.0 -- 11 modulos activos, build autocontenido, 208 tests.
 
 ## Build
 
 ```bash
 cd Quantum4Lean
-lake build
+lake build && ./build/bin/quantum4lean-test
 ```
 
-Cero dependencias externas. Solo requiere Lean 4 (v4.7.0). Sin mathlib4, sin binario C++.
+Cero dependencias externas. Solo requiere Lean 4 (v4.7.0).
 
 ## Arquitectura
 
 ```
-                          Quantum4Lean.lean (modulo principal)
-                                  |
-          +-----------------------+-----------------------+
-          |                       |                       |
-   Quantum4LeanCore        Quantum4LeanError      Quantum4LeanEngine
-   (Qubit, Gate,           (QuantumError          (StateVector,
-    Circuit)                 inductivo)             simulador bit-exacto)
-          |                       |                       |
-          +-----------------------+-----------------------+
-                                  |
-                          Quantum4LeanFuzz
-                          (Tests algebraicos + aleatorios)
-
-Modulos opcionales (no importados por defecto):
-   Quantum4LeanFFI         Bindings @[extern] al motor C
-   Quantum4LeanSim         Runner FFI (token, state vector manual)
-   Quantum4LeanMonad       Monada cuantica sobre FFI
-   Quantum4LeanCompile     Circuit -> QuantumM
-   Quantum4LeanObservable  PauliString, expect
-   Quantum4LeanVQE         VQE con parameter-shift
-   Quantum4LeanQAOA        QAOA con Ising
-   Quantum4LeanUnitary     Matrices unitarias, circuitsEquiv
-   Quantum4LeanDSL         Macro circuit\! { H q[0]; ... }
-   Quantum4LeanVerify      Identidades algebraicas H*H=I
-   Quantum4LeanExamples    Bell, GHZ, Grover, QFT
-   Quantum4LeanTest        55 aserciones (Complex, UnitaryMatrix)
+                    Quantum4Lean.lean (modulo principal)
+                            |
+    +-------+-------+-------+-------+-------+-------+-------+
+    |       |       |       |       |       |       |       |
+   Core   Error  Engine  Fuzz  Unitary  Obs    VQE    QAOA
+                                                    (Ising)
+                            |
+                    +-------+-------+
+                    |               |
+              Quantum4LeanDSL  Quantum4LeanTactic
+              (circuit\! {})    (circuit_equiv)
 ```
 
-## Dos motores de ejecucion
-
-### Motor 1: Quantum4LeanEngine (puro Lean, siempre disponible)
-
-Simulador de state vector bit-exacto con el motor C++ CoreQU4TRIX. Algoritmos, matrices, LCG y umbrales identicos.
-
-| Parametro | Valor |
-|-----------|-------|
-| Qubits maximos | 10 (2048 complejos) |
-| Precision | IEEE 754 binary64 (Float) |
-| LCG | seed*6364136223846793005 + 1442695040888963407 |
-| Umbral colapso | 1e-15 |
-| Puertas | H, X, Y, Z, S, T, CNOT, CZ, SWAP, RX, RY, RZ, Unitaria |
+## Uso rapido
 
 ```lean
 import Quantum4Lean
+open Quantum4Lean.DSL.Shortcuts
 
--- Circuito Bell con tipos dependientes
-def bellCircuit : Circuit 2 :=
-  let q0 : Qubit 2 := <<0, by decide>>
-  let q1 : Qubit 2 := <<1, by decide>>
-  { gates := [Gate.H q0, Gate.CNOT q0 q1] }
+-- Circuito Bell con DSL declarativo
+def bell : Circuit 2 := circuit\! {
+  H q[0];
+  CNOT q[0] q[1]
+}
 
 -- Ejecutar en el motor puro-Lean
-#eval executeSim bellCircuit
--- Except.ok [1, 1]  (estado |11>)
+#eval executeSim bell
+-- Except.ok [1, 1]
 
--- Obtener probabilidades
-#eval executeSimProbs bellCircuit
--- Except.ok #[0.5, 0.0, 0.0, 0.5]  (|00> y |11> con 50% cada uno)
+-- Verificar equivalencia semantica
+#eval circuitsEquiv bell bell
+-- true
+
+-- Usar la tactica (n <= 3, sin puertas H)
+example : circuitsEquiv
+  (circuit fun c => (c.add (Gate.X q[0])).add (Gate.X q[0]))
+  (Circuit.identity 2) := by
+  circuit_equiv
 ```
 
-### Motor 2: FFI a CoreQU4TRIX (opcional, requiere binario C++)
+## API
 
-Para N > 10 qubits o ejecucion en GPU Metal 3. Hasta 30 qubits (~17 GB RAM Unificada).
+| Categoria | Simbolos |
+|-----------|----------|
+| Tipos | `Qubit`, `Gate`, `Circuit`, `StateVector`, `Complex`, `UnitaryMatrix` |
+| Pauli | `Pauli`, `PauliString`, `Observable` |
+| Ejecucion | `executeSim`, `executeSimProbs` |
+| Expectacion | `expect`, `expectPauliString`, `expectZ`, `expectX`, `expectY` |
+| VQE | `vqe`, `isingAnsatz`, `gradient`, `parameterShiftGradient` |
+| QAOA | `qaoaIsing`, `qaoaIsingCircuit`, `qaoaMixingLayer` |
+| Verificacion | `compile`, `circuitsEquiv`, `circuit_equiv` (tactica) |
+| DSL | `circuit\! { ... }`, `q[i]`, `H`, `X`, `CNOT`, ... (Shortcuts) |
+| Fuzzer | `FuzzConfig`, `FuzzReport`, `runFullSuite`, `reportToString` |
 
-```bash
-lake build -K enableFFI=true
-```
-
-## Fuzzer intra-Lean
-
-Suite de verificacion que valida el Engine contra propiedades algebraicas. 0% FFI, 0% dependencias externas.
+## DSL
 
 ```lean
-import Quantum4Lean
+-- Con nombres completos (siempre disponible)
+def bell : Circuit 2 := circuit\! {
+  Gate.H q[0];
+  Gate.CNOT q[0] q[1]
+}
 
--- Suite completa (identidades + Bell + GHZ + Pauli + aleatorios)
-#eval runFullSuite { maxQubits := 5, numCircuits := 100 }
-
--- Reporte legible
-#eval reportToString (runFullSuite { numCircuits := 50 })
+-- Con alias cortos (requiere `open Quantum4Lean.DSL.Shortcuts`)
+def ghz3 : Circuit 3 := circuit\! {
+  H q[0];
+  CNOT q[0] q[1];
+  CNOT q[1] q[2]
+}
 ```
 
-### Categorias de test
+## Tactica circuit_equiv
 
-| Categoria | Que verifica | Metodo |
-|-----------|-------------|--------|
-| Identidades | H*H=I, X*X=I, Y*Y=I, Z*Z=I | Amplitud en estado 0 = 1+0i |
-| Identidades 2q | CNOT*CNOT=I, CZ*CZ=I, SWAP*SWAP=I | Amplitud en estado inicial |
-| Periodicas | S^4=I, T^8=I | 4 y 8 aplicaciones consecutivas |
-| Pauli | XZ vs ZX (diferencia de signo) | XZ|0>=|1>, ZX|0>=-|1> |
-| Bell | (|00>+|11>)/sqrt(2) | 4 amplitudes exactas |
-| GHZ | (|000>+|111>)/sqrt(2) | 2 amplitudes exactas |
-| Aleatorios | N circuitos pseudoaleatorios | Normalizacion, determinismo, reversibilidad |
+```lean
+-- Funciona con native_decide para circuitos sin H (Pauli, CNOT, CZ, SWAP)
+example : circuitsEquiv
+  (circuit fun c => (c.add (Gate.X q[0])).add (Gate.X q[0]))
+  (Circuit.identity 2) := by
+  circuit_equiv
+
+-- Para circuitos con H, usar #eval
+#eval circuitsEquiv
+  (circuit fun c => (c.add (Gate.H q[0])).add (Gate.H q[0]))
+  (Circuit.identity 2)
+```
+
+## Fuzzer
+
+```lean
+#eval runFullSuite { maxQubits := 5, numCircuits := 200 }
+#eval reportToString (runFullSuite { numCircuits := 100 })
+```
 
 ## Bit-exactness con CoreQU4TRIX
 
-El Engine replica los algoritmos del motor C++ linea por linea:
-
 | Algoritmo | Fuente C++ | Implementacion Lean |
 |-----------|-----------|-------------------|
-| Unitario 1q | `aplicar_unitaria_cpu` (linea 365) | `applyUnitaryInPlace` |
-| CNOT | `aplicar_cnot_cpu` (linea 400) | `applyCNOTInPlace` |
-| CZ | `aplicar_cz_cpu` (linea 420) | `applyCZInPlace` |
-| SWAP | `aplicar_swap_cpu` (linea 440) | `applySWAPInPlace` |
-| Medicion | `medir_y_colapsar_cpu` (linea 465) | `measure` |
+| Unitario 1q | `aplicar_unitaria_cpu` | `applyUnitaryInPlace` |
+| CNOT | `aplicar_cnot_cpu` | `applyCNOTInPlace` |
+| CZ | `aplicar_cz_cpu` | `applyCZInPlace` |
+| SWAP | `aplicar_swap_cpu` | `applySWAPInPlace` |
+| Medicion | `medir_y_colapsar_cpu` | `measure` |
 | LCG | `6364136223846793005` | `lcgNext` |
-| Matrices | `GATE_X`, `GATE_H`, `obtener_matriz_puerta` | `GATE_X`, `GATE_H`, `gateRX` |
 
-## API de StateVector
-
-```lean
--- Inicializar |0...0> en N qubits
-let sv <- StateVector.init 3
-
--- Aplicar circuito
-let sv := StateVector.runCircuit sv miCircuito
-
--- Medir un qubit (colapsa el estado)
-let (bit, sv) := StateVector.measure sv 0
-
--- Medir todos los qubits
-let (bits, sv) := StateVector.measureAll sv
-
--- Probabilidades
-let probs := StateVector.probabilities sv
-
--- Amplitud de un estado base
-let (re, im) := StateVector.amplitude sv 5
-
--- Probabilidad de un estado base
-let p := StateVector.prob sv 0
-
--- Ejecutar circuito completo con medicion
-let resultado := StateVector.run miCircuito 123456789 1
-```
-
-## Estructura del proyecto
+## Estructura
 
 ```
 Quantum4Lean/
 +-- lakefile.lean
-+-- lean-toolchain
 +-- Quantum4Lean.lean              -- Modulo principal
 +-- Quantum4Lean/
 |   +-- Quantum4LeanCore.lean      -- Qubit, Gate, Circuit
-|   +-- Quantum4LeanError.lean     -- QuantumError inductivo
-|   +-- Quantum4LeanEngine.lean    -- Motor puro-Lean bit-exacto
+|   +-- Quantum4LeanError.lean     -- QuantumError
+|   +-- Quantum4LeanEngine.lean    -- StateVector, simulador
 |   +-- Quantum4LeanFuzz.lean      -- Fuzzer intra-Lean
-|   +-- Quantum4LeanFFI.lean       -- [opc] Bindings @[extern] C
-|   +-- Quantum4LeanSim.lean       -- [opc] Runner FFI
-|   +-- Quantum4LeanMonad.lean     -- [opc] Monada cuantica
-|   +-- Quantum4LeanCompile.lean   -- [opc] Circuit -> QuantumM
-|   +-- Quantum4LeanObservable.lean-- [opc] Observables
-|   +-- Quantum4LeanVQE.lean       -- [opc] VQE
-|   +-- Quantum4LeanQAOA.lean      -- [opc] QAOA
-|   +-- Quantum4LeanUnitary.lean   -- [opc] Matrices unitarias
-|   +-- Quantum4LeanDSL.lean       -- [opc] Macro circuit\!
-|   +-- Quantum4LeanVerify.lean    -- [opc] Identidades algebraicas
-|   +-- Quantum4LeanExamples.lean  -- [opc] Bell, GHZ, Grover, QFT
-|   +-- Quantum4LeanTest.lean      -- [opc] 55 aserciones
-+-- Quantum4LeanBridge/            -- Puente C (solo con enableFFI)
-|   +-- Quantum4LeanBridge.h
-|   +-- Quantum4LeanBridge.c
-+-- concepto.md                    -- Analisis del ecosistema Lean 4
+|   +-- Quantum4LeanUnitary.lean   -- Complex, UnitaryMatrix
+|   +-- Quantum4LeanObservable.lean-- PauliString, expect
+|   +-- Quantum4LeanVQE.lean       -- Parameter-shift, VQE
+|   +-- Quantum4LeanQAOA.lean      -- Mixing layer, Ising
+|   +-- Quantum4LeanDSL.lean       -- circuito\!, q[i]
+|   +-- Quantum4LeanTactic.lean    -- circuit_equiv
+|   +-- Quantum4LeanRunner.lean    -- Ejecutable de tests
+|   +-- (8 modulos conservados para futuro)
++-- Quantum4LeanBridge/            -- Puente C (opcional)
++-- .github/workflows/ci.yml       -- CI
 +-- README.md
 ```
 
 ## Requisitos
 
 - Lean 4 (v4.7.0)
-- macOS / Linux / Windows (motor puro-Lean)
+- macOS / Linux / Windows
 - Apple Silicon + macOS 13+ (solo para FFI/Metal opcional)
-
-## Sinergia con QuantumKit
-
-| Dimension | QuantumKit (Swift) | Quantum4Lean (Lean 4) |
-|-----------|-------------------|----------------------|
-| Ejecucion | C++/Metal, hasta 30 qubits | Puro-Lean, hasta 10 qubits |
-| Verificacion | Tests unitarios | Fuzzer + tipos dependientes |
-| Backends | 8 (Metal, CPU, ruido, pulsos) | 1 (Engine) + 1 opcional (FFI) |
-| Publico | Desarrolladores Apple | Matematicos / Investigadores |
-| Memoria | ARC (ObjC) / UMA | Array Float inmutable |
-| Build | SPM / Xcode | Lake (autocontenido) |
