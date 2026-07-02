@@ -2,7 +2,7 @@
 
 Computacion cuantica verificada en Lean 4. Motor puro-Lean bit-exacto con CoreQU4TRIX (C++/Metal). Stack NISQ completo: StateVector, Observables, VQE, QAOA. DSL declarativo, tactica `circuit_equiv` y fuzzer intra-Lean.
 
-Estado: v0.4.0 -- 13 modulos activos, build autocontenido, 208 tests.
+Estado: v0.4.0 -- 14 modulos activos, build autocontenido, 208 tests.
 
 ## Build
 
@@ -23,7 +23,7 @@ Cero dependencias externas. Solo requiere Lean 4 (v4.7.0).
    Core   Error  Engine  Fuzz  Unitary  Obs    VQE    QAOA
                                                     (Ising)
     |       |       |       |
-   DSL   Tactic   Simp  Transpile
+   DSL   Tactic   Simp  Transpile  Clifford
 
 Quantum4LeanPlayground/          -- Demostraciones avanzadas
 +-- QuantumRiemann.lean          -- Riemann + Cuantica
@@ -67,7 +67,8 @@ example : circuitsEquiv
 | Expectacion | `expect`, `expectPauliString`, `expectZ`, `expectX`, `expectY` |
 | VQE | `vqe`, `isingAnsatz`, `gradient`, `parameterShiftGradient` |
 | QAOA | `qaoaIsing`, `qaoaIsingCircuit`, `qaoaMixingLayer` |
-| Verificacion | `compile`, `circuitsEquiv`, `circuit_equiv` (tactica) || Optimizacion | `simplifyCircuit`, `optimizeCircuit`, `verifyOptimization` || DSL | `circuit\! { ... }`, `q[i]`, `H`, `X`, `CNOT`, ... (Shortcuts) |
+| Verificacion | `compile`, `circuitsEquiv`, `circuit_equiv` (tactica) || Clifford | `cliffordEquiv`, `CliffordAmplitude`, `CliffordMatrix` |
+| Optimizacion | `simplifyCircuit`, `optimizeCircuit`, `verifyOptimization` || DSL | `circuit\! { ... }`, `q[i]`, `H`, `X`, `CNOT`, ... (Shortcuts) |
 | Fuzzer | `FuzzConfig`, `FuzzReport`, `runFullSuite`, `reportToString` |
 
 ## DSL
@@ -100,6 +101,19 @@ example : circuitsEquiv
 #eval circuitsEquiv
   (circuit fun c => (c.add (Gate.H q[0])).add (Gate.H q[0]))
   (Circuit.identity 2)
+```
+
+## Verificacion Clifford (Z[i])
+
+Demostracion formal de equivalencias para las 7 puertas Clifford (X, Y, Z, S, CNOT, CZ, SWAP) usando aritmetica entera en Z[i]. Sin Float, sin √2. 8 teoremas demostrados con `native_decide`.
+
+```lean
+-- Demostrado formalmente (0 sorry)
+theorem rule_X_X_eq_I : cliffordEquiv c (Circuit.identity 2) := by
+  native_decide
+
+-- Verificacion runtime para cualquier circuito Clifford
+#eval cliffordEquiv miCircuito otroCircuito
 ```
 
 ## Fuzzer
@@ -151,6 +165,7 @@ Quantum4Lean/
 |   +-- Quantum4LeanTactic.lean    -- circuit_equiv, quantum_simp
 |   +-- Quantum4LeanSimp.lean      -- Simplificador (12 reglas)
 |   +-- Quantum4LeanTranspile.lean -- Transpilador (8 teoremas)
+|   +-- Quantum4LeanClifford.lean  -- Verificacion Clifford (Z[i])
 |   +-- Quantum4LeanRunner.lean    -- Ejecutable de tests
 |   +-- (7 modulos conservados)
 +-- Quantum4LeanPlayground/

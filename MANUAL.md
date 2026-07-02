@@ -434,13 +434,21 @@ let theoryProbs := UnitaryMatrix.theoreticalProbs U
 
 ### Equivalencia de Circuitos
 
-```lean
--- Verificar equivalencia semantica
-#eval circuitsEquiv c1 c2
--- true si traceDistance < 1e-6
+Quantum4Lean ofrece dos niveles de verificacion:
 
--- Con tolerancia personalizada
-#eval circuitsEquiv c1 c2 1e-9
+**Nivel 1: `cliffordEquiv` (formal, Z[i])** -- Para las 7 puertas Clifford (X, Y, Z, S, CNOT, CZ, SWAP). Usa aritmetica entera en Z[i] = {a+bi | a,b ∈ Z}. `native_decide` demuestra automaticamente.
+
+```lean
+-- Demostracion formal (kernel, sin Float, sin √2)
+theorem regla : cliffordEquiv c1 c2 := by
+  native_decide
+```
+
+**Nivel 2: `circuitsEquiv` (runtime, Float)** -- Para cualquier circuito (incluye H, T, rotaciones). Verifica via `#eval` comparando matrices unitarias con `traceDistance`.
+
+```lean
+-- Verificacion runtime
+#eval circuitsEquiv c1 c2
 ```
 
 ### Tacticas
@@ -603,6 +611,8 @@ Maxima estabilidad coherente en $\delta_{opt} = 5/3$ ($F \approx 58.97$). La fun
 | `Circuit n` | Secuencia ordenada de puertas |
 | `StateVector` | Vector de estado (Array Float interleaved) |
 | `Complex` | Numero complejo (re, im) |
+| `CliffordAmplitude` | Amplitud Clifford (a+bi, a,b ∈ Z) |
+| `CliffordMatrix n` | Matriz Clifford sobre Z[i] |
 | `UnitaryMatrix n` | Matriz unitaria $2^n \times 2^n$ |
 | `Pauli` | I, X, Y, Z |
 | `PauliString` | Producto tensorial de Paulis con coeficiente |
@@ -666,7 +676,9 @@ Maxima estabilidad coherente en $\delta_{opt} = 5/3$ ($F \approx 58.97$). La fun
 | Funcion | Descripcion |
 |---------|-------------|
 | `compile c` | Circuito -> UnitaryMatrix |
-| `circuitsEquiv c1 c2 eps` | Equivalencia semantica |
+| `circuitsEquiv c1 c2 eps` | Equivalencia semantica (Float) |
+| `cliffordEquiv c1 c2` | Equivalencia formal (Z[i], `native_decide`) |
+| `compileClifford c` | Circuito -> CliffordMatrix |
 | `UnitaryMatrix.mul a b` | Multiplicacion |
 | `UnitaryMatrix.adjoint u` | Conjugada transpuesta |
 | `UnitaryMatrix.traceDistance a b` | Distancia de traza |
@@ -725,6 +737,7 @@ Quantum4Lean/
 |   +-- Quantum4LeanUnitary.lean   -- Complex, UnitaryMatrix, circuitsEquiv
 |   +-- Quantum4LeanSimp.lean      -- Simplificador simbolico (12 reglas)
 |   +-- Quantum4LeanTranspile.lean -- Transpilador verificado (8 teoremas)
+|   +-- Quantum4LeanClifford.lean  -- Verificacion Clifford (Z[i])
 |   +-- Quantum4LeanFuzz.lean      -- Fuzzer intra-Lean
 |   +-- Quantum4LeanDSL.lean       -- Macro circuit!, q[i], Shortcuts
 |   +-- Quantum4LeanTactic.lean    -- circuit_equiv, quantum_simp
