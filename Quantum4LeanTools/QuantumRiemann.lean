@@ -1,5 +1,5 @@
 /-
-QuantumVolcanic.lean -- Resonancia Volcanica: Riemann + Cuantica
+QuantumRiemann.lean -- Resonancia de Riemann + Cuantica
 
 Fusiona la Hipotesis de Riemann (segundas diferencias de gaps primos)
 con dinamica cuantica de espines (Ising) usando el Engine puro de
@@ -32,7 +32,7 @@ Compatible: Lean 4.7.0, build autocontenido.
 
 import Quantum4Lean
 
-namespace Quantum4Lean.Tools.Volcanic
+namespace Quantum4Lean.Tools.Riemann
 
 -- ===================================================================
 -- Primos y gaps
@@ -217,7 +217,7 @@ def report : String :=
   let ps := primes 20
   let d2g := delta2Gaps ps
   let pve := PVE d2g
-  let header := "RESONANCIA VOLCANICA: Riemann + Cuantica\n"
+  let header := "RESONANCIA DE RIEMANN: Primos + Cuantica\n"
   let info := s!"Primos: {ps.length} generados\n"
   let info := info ++ s!"Δ²g (primeros 10): {d2g.take 10}\n"
   let info := info ++ s!"PVE = {pve}\n\n"
@@ -230,4 +230,4 @@ def report : String :=
   ) info
   header ++ info
 
-end Quantum4Lean.Tools.Volcanic
+end Quantum4Lean.Tools.Riemann
