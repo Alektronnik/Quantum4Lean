@@ -30,6 +30,7 @@ import Quantum4Lean.Quantum4LeanError
 import Quantum4Lean.Quantum4LeanEngine
 import Quantum4Lean.Quantum4LeanFuzz
 import Quantum4Lean.Quantum4LeanUnitary
+import Quantum4Lean.Quantum4LeanSimp
 import Quantum4Lean.Quantum4LeanObservable
 import Quantum4Lean.Quantum4LeanVQE
 import Quantum4Lean.Quantum4LeanQAOA
@@ -43,6 +44,7 @@ export Quantum4Lean (Qubit Gate Circuit StateVector
   Pauli PauliString Observable
   expect expectPauliString expectZ expectX expectY
   vqe isingAnsatz gradient parameterShiftGradient
-  qaoaIsing qaoaIsingCircuit qaoaMixingLayer)
+  qaoaIsing qaoaIsingCircuit qaoaMixingLayer
+  simplifyCircuit simplificationSavings)
 
 -- DSL y tacticas disponibles via `import Quantum4Lean` automaticamente
