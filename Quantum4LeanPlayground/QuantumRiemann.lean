@@ -73,10 +73,13 @@ def delta2Gaps (ps : List Nat) : List Int :=
 Presion Volcanica Exponencial (PVE): metrica de volatilidad prima.
 PVE = max(|Δ²g|) / mean(|Δ²g|)
 --/
+private def intToFloat (x : Int) : Float :=
+  if x >= 0 then x.toNat.toFloat else -(((-x).toNat.toFloat))
+
 def PVE (delta2 : List Int) : Float :=
-  let absVals := delta2.map fun x => (if x >= 0 then x else -x).toFloat
-  let maxVal := absVals.foldl (fun m v => if v > m then v else m) 0.0 0 absVals.length
-  let sum := absVals.foldl (fun s v => s + v) 0.0 0 absVals.length
+  let absVals : List Float := List.map (fun x => intToFloat (if x >= 0 then x else -x)) delta2
+  let maxVal := List.foldl (fun m v => if v > m then v else m) 0.0 absVals
+  let sum := List.foldl (fun s v => s + v) 0.0 absVals
   let meanVal := if absVals.length = 0 then 1.0 else sum / absVals.length.toFloat
   if meanVal < 1e-10 then maxVal else maxVal / meanVal
 

@@ -1,6 +1,6 @@
 # Quantum4Lean -- Manual de Usuario
 
-v0.4.0. Julio 2026.
+v0.5.0. Julio 2026.
 
 ## Indice
 
@@ -17,8 +17,10 @@ v0.4.0. Julio 2026.
 11. [Simplificador y Transpilador](#11-simplificador-y-transpilador)
 12. [Fuzzer Intra-Lean](#12-fuzzer-intra-lean)
 13. [Traductor Diofantino](#13-traductor-diofantino)
-14. [API de Referencia](#14-api-de-referencia)
-15. [Arquitectura del Proyecto](#15-arquitectura-del-proyecto)
+14. [Traductor Polinomico](#14-traductor-polinomico)
+15. [Playground](#15-playground)
+16. [API de Referencia](#16-api-de-referencia)
+17. [Arquitectura del Proyecto](#17-arquitectura-del-proyecto)
 
 ---
 
@@ -28,7 +30,8 @@ Quantum4Lean es una plataforma de computacion cuantica verificada en Lean 4. Pro
 
 - **Motor de simulacion puro-Lean** bit-exacto con CoreQU4TRIX (C++/Metal)
 - **Stack NISQ completo**: StateVector, Observables, VQE, QAOA
-- **Traductor diofantino**: convierte ecuaciones lineales en Hamiltonianos Ising
+- **Traductor diofantino**: ecuaciones lineales a Hamiltonianos Ising
+- **Traductor polinomico**: monomios con exponentes <= 3 (Tijdeman, Pillai)
 - **Verificacion formal**: matrices unitarias, equivalencia semantica, tacticas
 - **Simplificador simbolico**: reescritura de circuitos sobre el AST (N arbitrario)
 - **Transpilador verificado**: optimizacion con preservacion de semantica
@@ -634,7 +637,108 @@ let result := diophantineSolve eq 4
 
 ---
 
-## 14. API de Referencia
+## 14. Traductor Polinomico
+
+Generaliza el traductor lineal. Soporta monomios con exponentes 1, 2, 3.
+Permite atacar ecuaciones como $x^2 = y^3 + 1$ (Tijdeman) via QAOA/VQE.
+
+### Tipos
+
+```lean
+structure Monomial where
+  coefficient : Int
+  exponents   : List (Nat x Nat)   -- (indiceVariable, exponente)
+
+structure PolyEquation where
+  monomials : List Monomial
+  constant  : Int
+  varBits   : List Nat             -- bits por variable
+
+structure PolyResult where
+  values    : List (String x Int)
+  energy    : Float
+  satisfied : Bool
+```
+
+### Metodo
+
+Cada variable $x$ con $b$ bits se codifica como $x = \sum 2^j \cdot \frac{1-Z_j}{2}$.
+$q_j = \frac{1-Z_j}{2}$ es idempotente ($q_j^2 = q_j$). Expandimos $( \sum \text{monomios} - c)^2$.
+
+Soporta exponentes <= 3. Para exponentes > 3, se requiere recursion.
+
+### Uso
+
+```lean
+import Quantum4Lean
+
+-- Ecuacion de Tijdeman: x^2 - y^3 = 1
+let eq : PolyEquation := {
+  monomials := [
+    { coefficient := 1,  exponents := [(0, 2)] },
+    { coefficient := -1, exponents := [(1, 3)] }
+  ],
+  constant := 1,
+  varBits := [4, 4]  -- 4 bits para x, 4 para y
+}
+
+-- Convertir a Hamiltoniano Ising (8 qubits)
+let H := polyToIsing eq
+let n := polyTotalQubits eq  -- 8
+```
+
+### API
+
+| Funcion | Descripcion |
+|---------|-------------|
+| `Monomial` | Coeficiente * producto de variables |
+| `PolyEquation` | Suma de monomios = constante |
+| `polyToIsing eq` | Observable Ising para QAOA/VQE |
+| `polyTotalQubits eq` | Numero total de qubits |
+| `expandVarPower startQ bits exp` | Expande x^e en PauliStrings |
+| `expandMonomial m offsets varBits` | Expande monomio completo |
+
+### Algoritmo de expansion
+
+| Exponente | Terminos generados |
+|-----------|-------------------|
+| 1 (lineal) | I, Z_j |
+| 2 (cuadratico) | I, Z_j, Z_j Z_k (j<k) |
+| 3 (cubico) | I, Z_j, Z_j Z_k, Z_j Z_k Z_l (j<k<l) |
+
+---
+
+## 15. Playground
+
+Demostraciones avanzadas que extienden la libreria. Se importan por separado:
+
+```lean
+import Quantum4LeanPlayground
+
+#eval Quantum4LeanPlayground.Tijdeman.report
+```
+
+### Tijdeman Cuantico
+
+Resuelve $x^2 = y^3 + 1$ via QAOA. Validacion cruzada contra la demostracion
+formal en Lean 4 (ABC_Formal_Enhanced.lean: 9/9 casos, p,q <= 4).
+
+```lean
+import Quantum4LeanPlayground
+
+-- Reporte completo
+#eval Quantum4LeanPlayground.Tijdeman.report
+
+-- Test: verifica que |00110010> (x=3, y=2) tiene energia 0
+#eval Quantum4LeanPlayground.Tijdeman.testExactSolution
+```
+
+Solucion esperada: $x=3$, $y=2$ ($3^2 = 9 = 2^3 + 1 = 8 + 1$).
+Representacion: 8 qubits (4 para x, 4 para y).
+
+---
+
+## 16. API de Referencia
 
 ### Tipos publicos
 
@@ -656,6 +760,9 @@ let result := diophantineSolve eq 4
 | `Diophantine` | Ecuacion diofantina (vars + constante) |
 | `DiophantineVar` | Variable diofantina (coeff, nombre, bits) |
 | `DiophantineResult` | Resultado de optimizacion |
+| `Monomial` | Monomio (coef * prod vars^exp) |
+| `PolyEquation` | Ecuacion polinomica |
+| `PolyResult` | Resultado del solver polinomico |
 
 ### Ejecucion
 
@@ -757,6 +864,15 @@ Todas las funciones estan en el namespace principal (`Quantum4Lean`). No requier
 | `checkSolution eq values` | Verificar solucion |
 | `decodeValues eq bitsPerVar sv` | StateVector -> valores |
 
+### Polinomico
+
+| Funcion | Descripcion |
+|---------|-------------|
+| `polyToIsing eq` | PolyEquation -> Observable Ising |
+| `polyTotalQubits eq` | Numero total de qubits |
+| `expandVarPower startQ bits exp` | Expande x^e en PauliStrings |
+| `expandMonomial m offsets varBits` | Expande monomio completo |
+
 ### Tacticas
 
 Disponibles tras `import Quantum4Lean`. No requieren `open`.
@@ -768,7 +884,7 @@ Disponibles tras `import Quantum4Lean`. No requieren `open`.
 
 ---
 
-## 15. Arquitectura del Proyecto
+## 17. Arquitectura del Proyecto
 
 ```
 Quantum4Lean/
@@ -787,9 +903,15 @@ Quantum4Lean/
 |   +-- Quantum4LeanFuzz.lean      -- Fuzzer intra-Lean
 |   +-- Quantum4LeanDSL.lean       -- Macro circuit!, q[i], Shortcuts
 |   +-- Quantum4LeanTactic.lean    -- circuit_equiv, quantum_simp
-|   +-- Quantum4LeanDiophantine.lean-- Traductor Diofantino
+|   +-- Quantum4LeanDiophantine.lean-- Traductor diofantino lineal
+|   +-- Quantum4LeanPolynomial.lean -- Traductor polinomico
 |   +-- Quantum4LeanRunner.lean    -- Ejecutable de tests
 |   +-- (8 modulos conservados)    -- FFI, Monad, Compile, Sim, etc.
++-- Quantum4LeanPlayground.lean    -- Root del Playground
++-- Quantum4LeanPlayground/
+|   +-- QuantumTijdeman.lean       -- Tijdeman cuantico
+|   +-- QuantumRiemann.lean        -- Resonancia de Riemann
+|   +-- QuantumTRDU.lean           -- TRDU-Q
 +-- .github/workflows/ci.yml       -- Integracion Continua
 +-- lakefile.lean                  -- Build autocontenido
 +-- README.md                      -- Documentacion

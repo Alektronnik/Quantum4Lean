@@ -39,6 +39,7 @@ import Quantum4Lean.Quantum4LeanVQE
 import Quantum4Lean.Quantum4LeanQAOA
 import Quantum4Lean.Quantum4LeanDSL
 import Quantum4Lean.Quantum4LeanTactic
+import Quantum4Lean.Quantum4LeanPolynomial
 
 export Quantum4Lean (Qubit Gate Circuit StateVector
   executeSim executeSimProbs
@@ -52,6 +53,8 @@ export Quantum4Lean (Qubit Gate Circuit StateVector
   simplifyCircuit simplificationSavings
   optimizeCircuit optimizationSavings
   DiophantineVar Diophantine DiophantineResult
-  toIsing diophantineSolve checkSolution decodeValues)
+  toIsing diophantineSolve checkSolution decodeValues
+  Monomial PolyEquation PolyResult
+  expandVarPower expandMonomial polyToIsing polyTotalQubits)
 
 -- DSL y tacticas disponibles via `import Quantum4Lean` automaticamente
