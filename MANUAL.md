@@ -259,10 +259,12 @@ let resultado := StateVector.run miCircuito 123456789 1
 Para N > 10 qubits o GPU Metal 3. Hasta 30 qubits en Apple Silicon.
 
 ```bash
-lake build -K enableFFI=true
+# Requisito previo: compilar QuantumKitCore (proyecto hermano)
+cd ../QuantumKit && swift build
+cd ../Quantum4Lean && lake build -K enableFFI=true
 ```
 
-Requiere el binario de QuantumKitCore. No incluido en el build por defecto.
+El linker busca `libQuantumKitCore.a` en los paths de build de QuantumKit. Si el binario no se encuentra, el build FFI fallara con errores de simbolos indefinidos. El motor puro-Lean (Engine) funciona sin este paso.
 
 ---
 
@@ -567,24 +569,24 @@ let report := runFullSuite cfg
 ## 13. Playground
 
 Demostraciones avanzadas que muestran capacidades unicas de Quantum4Lean.
+Los modulos del Playground se importan explicitamente (no se cargan con `import Quantum4Lean`).
+
+```lean
+import Quantum4LeanPlayground
+
+#eval Quantum4Lean.Playground.Riemann.report
+#eval Quantum4Lean.Playground.TRDU.report
+```
 
 ### Resonancia de Riemann
 
 Fusiona gaps de primos con dinamica cuantica de espines:
 
-```lean
-#eval Quantum4Lean.Playground.Riemann.report
-```
-
 El Hamiltoniano $H = J \sum Z_i Z_{i+1} + \alpha \sum (\Delta^2 g_i) X_i$ usa las segundas diferencias de gaps primos como campos magneticos. Suzuki 2o orden preserva la coherencia del gato GHZ donde Trotter 1er orden colapsa.
 
 ### TRDU-Q
 
-Fidelidad de eco cuantico vs exceso dimensional $\delta$:
-
-```lean
-#eval Quantum4Lean.Playground.TRDU.report
-```
+Fidelidad de eco cuantico vs exceso dimensional $\delta$.
 
 Maxima estabilidad coherente en $\delta_{opt} = 5/3$ ($F \approx 58.97$). La funcion $F(\delta)$ es la densidad de complejidad proyectada de la Teoria de Resonancia Dimensional Unificada.
 
@@ -673,6 +675,8 @@ Maxima estabilidad coherente en $\delta_{opt} = 5/3$ ($F \approx 58.97$). La fun
 
 ### Simplificador y Transpilador
 
+Todas las funciones estan en el namespace principal (`Quantum4Lean`). No requieren `open` adicional.
+
 | Funcion | Descripcion |
 |---------|-------------|
 | `simplifyCircuit c` | Simplificacion simbolica |
@@ -696,6 +700,8 @@ Maxima estabilidad coherente en $\delta_{opt} = 5/3$ ($F \approx 58.97$). La fun
 | `fuzzRandomCircuits cfg` | Circuitos aleatorios |
 
 ### Tacticas
+
+Disponibles tras `import Quantum4Lean`. No requieren `open`.
 
 | Tactica | Descripcion |
 |---------|-------------|
