@@ -32,6 +32,7 @@ import Quantum4Lean.Quantum4LeanFuzz
 import Quantum4Lean.Quantum4LeanUnitary
 import Quantum4Lean.Quantum4LeanSimp
 import Quantum4Lean.Quantum4LeanTranspile
+import Quantum4Lean.Quantum4LeanClifford
 import Quantum4Lean.Quantum4LeanObservable
 import Quantum4Lean.Quantum4LeanVQE
 import Quantum4Lean.Quantum4LeanQAOA
@@ -42,6 +43,7 @@ export Quantum4Lean (Qubit Gate Circuit StateVector
   executeSim executeSimProbs
   FuzzConfig FuzzReport runFullSuite reportToString
   Complex UnitaryMatrix compile circuitsEquiv
+  CliffordAmplitude CliffordMatrix compileClifford cliffordEquiv
   Pauli PauliString Observable
   expect expectPauliString expectZ expectX expectY
   vqe isingAnsatz gradient parameterShiftGradient
