@@ -2,7 +2,7 @@
 
 Computacion cuantica verificada en Lean 4. Motor puro-Lean bit-exacto con CoreQU4TRIX (C++/Metal). Stack NISQ completo: StateVector, Observables, VQE, QAOA. DSL declarativo, tactica `circuit_equiv` y fuzzer intra-Lean.
 
-Estado: v0.4.0 -- 11 modulos activos, build autocontenido, 208 tests.
+Estado: v0.4.0 -- 13 modulos activos, build autocontenido, 208 tests.
 
 ## Build
 
@@ -22,11 +22,12 @@ Cero dependencias externas. Solo requiere Lean 4 (v4.7.0).
     |       |       |       |       |       |       |       |
    Core   Error  Engine  Fuzz  Unitary  Obs    VQE    QAOA
                                                     (Ising)
-                            |
-                    +-------+-------+
-                    |               |
-              Quantum4LeanDSL  Quantum4LeanTactic
-              (circuit\! {})    (circuit_equiv)
+    |       |       |       |
+   DSL   Tactic   Simp  Transpile
+
+Quantum4LeanPlayground/          -- Demostraciones avanzadas
++-- QuantumRiemann.lean          -- Riemann + Cuantica
++-- QuantumTRDU.lean             -- TRDU-Q
 ```
 
 ## Uso rapido
@@ -66,8 +67,7 @@ example : circuitsEquiv
 | Expectacion | `expect`, `expectPauliString`, `expectZ`, `expectX`, `expectY` |
 | VQE | `vqe`, `isingAnsatz`, `gradient`, `parameterShiftGradient` |
 | QAOA | `qaoaIsing`, `qaoaIsingCircuit`, `qaoaMixingLayer` |
-| Verificacion | `compile`, `circuitsEquiv`, `circuit_equiv` (tactica) |
-| DSL | `circuit\! { ... }`, `q[i]`, `H`, `X`, `CNOT`, ... (Shortcuts) |
+| Verificacion | `compile`, `circuitsEquiv`, `circuit_equiv` (tactica) || Optimizacion | `simplifyCircuit`, `optimizeCircuit`, `verifyOptimization` || DSL | `circuit\! { ... }`, `q[i]`, `H`, `X`, `CNOT`, ... (Shortcuts) |
 | Fuzzer | `FuzzConfig`, `FuzzReport`, `runFullSuite`, `reportToString` |
 
 ## DSL
@@ -109,6 +109,18 @@ example : circuitsEquiv
 #eval reportToString (runFullSuite { numCircuits := 100 })
 ```
 
+## Playground
+
+```lean
+import Quantum4LeanPlayground
+
+#eval Quantum4Lean.Playground.Riemann.report
+-- Resonancia de Riemann: gaps de primos + dinamica cuantica
+
+#eval Quantum4Lean.Playground.TRDU.report
+-- TRDU-Q: fidelidad de eco vs exceso dimensional
+```
+
 ## Bit-exactness con CoreQU4TRIX
 
 | Algoritmo | Fuente C++ | Implementacion Lean |
@@ -135,13 +147,20 @@ Quantum4Lean/
 |   +-- Quantum4LeanObservable.lean-- PauliString, expect
 |   +-- Quantum4LeanVQE.lean       -- Parameter-shift, VQE
 |   +-- Quantum4LeanQAOA.lean      -- Mixing layer, Ising
-|   +-- Quantum4LeanDSL.lean       -- circuito\!, q[i]
-|   +-- Quantum4LeanTactic.lean    -- circuit_equiv
+|   +-- Quantum4LeanDSL.lean       -- circuito!, q[i]
+|   +-- Quantum4LeanTactic.lean    -- circuit_equiv, quantum_simp
+|   +-- Quantum4LeanSimp.lean      -- Simplificador (12 reglas)
+|   +-- Quantum4LeanTranspile.lean -- Transpilador (8 teoremas)
 |   +-- Quantum4LeanRunner.lean    -- Ejecutable de tests
-|   +-- (8 modulos conservados para futuro)
+|   +-- (7 modulos conservados)
++-- Quantum4LeanPlayground/
+|   +-- Quantum4LeanPlayground.lean-- Modulo del Playground
+|   +-- QuantumRiemann.lean        -- Resonancia de Riemann
+|   +-- QuantumTRDU.lean           -- TRDU-Q
 +-- Quantum4LeanBridge/            -- Puente C (opcional)
 +-- .github/workflows/ci.yml       -- CI
 +-- README.md
++-- MANUAL.md
 ```
 
 ## Requisitos
