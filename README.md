@@ -44,7 +44,7 @@ def bell : Circuit 2 := circuit! {
 
 -- Ejecutar en el motor puro-Lean
 #eval executeSim bell
--- Except.ok [1, 1]
+-- Except.ok [1]
 
 -- Verificar equivalencia semantica
 #eval circuitsEquiv bell bell
@@ -170,8 +170,7 @@ let n := polyTotalQubits eq -- 8 qubits
 
 ## FFI: Puente C++/Metal (Apple Silicon)
 
-Motor externo con GPU acceleration via Metal 3. Hasta 30 qubits.
-Dos variantes: CPU-only (sin dependencias Metal) y Metal GPU (Apple Silicon).
+Motor externo con GPU acceleration via Metal 3. CPU: hasta 25 qubits (~512 MB). Metal GPU: Apple Silicon M2/M3 con memoria unificada. Dos variantes: CPU-only y Metal GPU.
 
 ```bash
 # CPU-only
@@ -184,14 +183,11 @@ bash buildMetal.sh && LEAN_CC=clang lake build quantum4lean-ffi-metal
 ```
 
 ```lean
-import Quantum4Lean.Quantum4LeanFFI
-open Quantum4Lean.FFI
+import Quantum4Lean
+open Quantum4Lean
 
--- 20 qubits: H a todos, medir
-let (token, estado) <- ffiInit 20
-ffiGate token estado HADAMARD 0 0
-let bit <- ffiMeasure token estado 0
-fiFinalize token
+-- Las funciones FFI estan en Quantum4Lean.FFI y los helpers en el playground
+-- Ejecutable precompilado: .lake/build/bin/quantum4lean-ffi
 ```
 
 Arquitectura FFI: Lean (`@[extern]` + `unsafe`) → C bridge (`Quantum4LeanFFI.c`) → Motor C++ (`QuantumKitCore.mm`) con JIT Metal embebido. Zero-copy via `FloatArray` (double*).
@@ -217,12 +213,6 @@ Busqueda masiva de contraejemplos en 3 escalas (9, 12, 19 qubits):
 
 ```lean
 #eval Quantum4LeanPlayground.Beal.report
-```
-
-
-Motor C++/Metal hasta 30 qubits. Requiere `bash build_ffi.sh`.
-
-```lean
 ```
 
 ### ADAM Optimizer
@@ -290,7 +280,7 @@ Quantum4Lean/
 |   +-- QuantumPlaygroundTRDU.lean
 +-- Quantum4LeanBridge/            -- Puente C (FFI)
 |   +-- Quantum4LeanFFI.h / .c
-+-- build_ffi.sh                   -- Compila lib FFI
++-- buildCPU.sh buildFFI.sh buildMetal.sh  -- Scripts FFI
 +-- .github/workflows/ci.yml       -- CI
 +-- README.md
 +-- MANUAL.md
@@ -298,6 +288,7 @@ Quantum4Lean/
 
 ## Requisitos
 
-- Lean 4 (v4.7.0)
+- Lean 4 (v4.31.0)
 - macOS / Linux / Windows
-- Apple Silicon + macOS 13+ (solo para FFI/Metal opcional)
+- Apple Silicon + macOS 13+ (solo para FFI/Metal opcional, hasta 25 qubits)
+- RAM: 512 MB para 20 qubits, 4 GB para 25 qubits
