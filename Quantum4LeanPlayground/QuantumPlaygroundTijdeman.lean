@@ -157,9 +157,12 @@ def testExactSolution : IO String := do
   | Except.error e => return s!"Error: {e}"
   | Except.ok sv =>
     -- Preparar |00110010>: aplicar X en qubits 0,1 (x=3) y qubit 4 (y=2)
-    let sv1 := StateVector.applyGate sv (Gate.X ⟨⟨0, by decide⟩⟩)
-    let sv2 := StateVector.applyGate sv1 (Gate.X ⟨⟨1, by decide⟩⟩)
-    let sv3 := StateVector.applyGate sv2 (Gate.X ⟨⟨4, by decide⟩⟩)
+    let q0 : Qubit 8 := ⟨⟨0, by decide⟩⟩
+    let q1 : Qubit 8 := ⟨⟨1, by decide⟩⟩
+    let q4 : Qubit 8 := ⟨⟨4, by decide⟩⟩
+    let sv1 := StateVector.applyGate sv (Gate.X q0)
+    let sv2 := StateVector.applyGate sv1 (Gate.X q1)
+    let sv3 := StateVector.applyGate sv2 (Gate.X q4)
     let H := tijdemanHamiltonian
     let energy := expect sv3 H
     let (x, y) := decodeTijdeman sv3

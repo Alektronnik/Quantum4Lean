@@ -20,7 +20,6 @@ Uso:
 
 import Quantum4LeanPlayground.QuantumPlaygroundCommon
 import Quantum4LeanPlayground.QuantumPlaygroundTest
-import Quantum4LeanPlayground.QuantumPlaygroundTest
 import Quantum4LeanPlayground.QuantumPlaygroundDiophantine
 import Quantum4LeanPlayground.QuantumPlaygroundFuzz
 import Quantum4LeanPlayground.QuantumPlaygroundBeal

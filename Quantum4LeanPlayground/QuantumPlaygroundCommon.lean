@@ -1,9 +1,6 @@
 /-
 QuantumPlaygroundCommon.lean
 Utilidades compartidas por todos los Playgrounds Diofantinos.
-
-Funciones: intToFloat, decodeState, evalCost, bruteForceSolve.
-Namespace: Quantum4LeanPlayground.Common.
 -/
 
 import Quantum4Lean
@@ -21,18 +18,21 @@ def decodeState (varBits : List Nat) (state : Nat) : List Int :=
       | [] => []
       | b :: bs => acc :: go (acc + b) bs
     go 0 varBits
-  List.mapIdx (fun i (bits : Nat) =>
-    let start := offsets.get! i
-    (List.range bits).foldl (fun (acc : Nat) (j : Nat) =>
-      if ((state >>> (start + j)) &&& 1) == 1 then acc + (1 <<< j) else acc
-    ) 0
-  ) varBits
+  let rec go (i : Nat) : List Nat -> List Int
+    | [] => []
+    | bits :: rest =>
+      let start := offsets.get! i
+      let val : Int := (List.range bits).foldl (fun (acc : Nat) (j : Nat) =>
+        if ((state >>> (start + j)) &&& 1) == 1 then acc + (1 <<< j) else acc
+      ) 0
+      val :: go (i + 1) rest
+  go 0 varBits
 
 def evalCost (eq : PolyEquation) (vals : List Int) : Float :=
   let c := intToFloat eq.constant
   let evalMonom (m : Monomial) : Float :=
     let prod := m.exponents.foldl (fun (acc : Float) ((vi, e) : Nat × Nat) =>
-      let v := vals.get! vi
+      let v := vals.get\! vi
       let vf := intToFloat v
       let p := if e == 0 then 1.0
                else if e == 1 then vf

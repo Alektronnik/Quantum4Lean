@@ -150,12 +150,12 @@ private def tryHCNOTH (a b c : Gate n) : Option (Gate n) :=
     else none
   | _, _, _ => none
 
-/-- H(c)*CNOT(c,t)*H(c) = CZ(t,c) --/
+/-- H(c)*CNOT(c,t)*H(c) = CZ(c,t) (CZ es simetrico) --/
 private def tryHCNOTHCtrl (a b c : Gate n) : Option (Gate n) :=
   match a, b, c with
   | .H qh1, .CNOT qc qt, .H qh2 =>
     if qh1.idx.val == qc.idx.val && qh2.idx.val == qc.idx.val then
-      some (.CZ qt qh1)
+      some (.CZ qc qt)
     else none
   | _, _, _ => none
 

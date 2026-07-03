@@ -116,7 +116,7 @@ def decodeValues (eq : Diophantine) (bitsPerVar : Nat) (sv : StateVector) : List
     let startQ := i * bitsPerVar
     let val : Int := (List.range v.bits).foldl (fun (acc : Int) (j : Nat) =>
       let bitVal : Nat := (maxIdx >>> (startQ + j)) &&& 1
-      if bitVal == 1 then acc + 1 else acc
+      if bitVal == 1 then acc + ((1 <<< j : Nat) : Int) else acc
     ) 0
     (v.name, val)
   ) eq.vars
