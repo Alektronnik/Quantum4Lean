@@ -51,36 +51,96 @@ private def listMapIdx {α β : Type} (f : Nat -> α -> β) : List α -> List β
     | y :: ys => f i y :: go (i + 1) ys
   go 0
 
+/--
+Convierte una variable diofantina x (con b bits) a lista de PauliStrings.
+x = sum_j 2^j * (1 - Z_j)/2 = sum_j (2^j/2 * I - 2^j/2 * Z_j)
+-/
+private def varToPauli (bits : Nat) (startQ : Nat) : List PauliString :=
+  let idTerm : PauliString := { coefficient := 0.0, terms := [] }
+  (List.range bits).foldl (fun (acc : List PauliString) (j : Nat) =>
+    let coeff := pow2 j / 2.0
+    let identPiece : PauliString := { coefficient := coeff, terms := [] }
+    let zPiece : PauliString :=
+      { coefficient := -coeff, terms := [PauliTerm.mk .Z (startQ + j)] }
+    identPiece :: zPiece :: acc
+  ) []
+
+/--
+Multiplica dos PauliStrings (producto tensorial, simplifica fases).
+Copia de pauliStringMul de Chemistry para evitar dependencia circular.
+-/
+private def psMul (a b : PauliString) : PauliString :=
+  let combined := a.terms ++ b.terms
+  -- Simplificar: fusionar qubits iguales
+  let rec simplify (ts : List PauliTerm) : Float × List PauliTerm :=
+    match ts with
+    | [] => (1.0, [])
+    | [t] => (1.0, [t])
+    | t1 :: t2 :: rest =>
+      if t1.qubit == t2.qubit then
+        match t1.pauli, t2.pauli with
+        | .X, .X => simplify rest
+        | .Y, .Y => simplify rest
+        | .Z, .Z => simplify ({ pauli := .I, qubit := t1.qubit } :: rest)
+        | .X, .Y => simplify ({ pauli := .Z, qubit := t1.qubit } :: rest)
+        | .Y, .X => simplify ({ pauli := .Z, qubit := t1.qubit } :: rest)
+        | .X, .Z => simplify ({ pauli := .Y, qubit := t1.qubit } :: rest)
+        | .Z, .X => simplify ({ pauli := .Y, qubit := t1.qubit } :: rest)
+        | .Y, .Z => simplify ({ pauli := .X, qubit := t1.qubit } :: rest)
+        | .Z, .Y => simplify ({ pauli := .X, qubit := t1.qubit } :: rest)
+        | _, _ => let (c, rest') := simplify (t2 :: rest); (c, t1 :: rest')
+      else
+        let (c, rest') := simplify (t2 :: rest); (c, t1 :: rest')
+    termination_by ts.length
+  let (phase, simplified) := simplify combined
+  { coefficient := a.coefficient * b.coefficient * phase
+  , terms := simplified.filter fun t => t.pauli ≠ .I }
+
+/--
+Convierte ecuacion diofantina lineal a Observable via
+multiplicacion explicita de PauliStrings (sin derivacion analitica).
+
+Cost = (sum a_i x_i - c)^2
+     = sum_{i,k} a_i a_k x_i x_k - 2c sum_i a_i x_i + c^2
+
+Cada x_i se expande en PauliStrings via varToPauli.
+Luego se multiplican explicitamente.
+-/
 def toIsing (eq : Diophantine) (bitsPerVar : Nat := 4) : Observable :=
   let vars := eq.vars
   let nVars := vars.length
   let c := intToFloat eq.constant
-  let qIdx (i j : Nat) : Nat := i * bitsPerVar + j
-  let linear : List PauliString :=
-    listBind (List.range nVars) fun i =>
+  let qIdx (i : Nat) : Nat := i * bitsPerVar
+  -- Expandir cada variable
+  let varExpanded : List (List PauliString) :=
+    (List.range nVars).map fun i =>
       let v := listGet vars i { coeff := 0, name := "", bits := 0 }
       let a := intToFloat v.coeff
-      (List.range v.bits).map fun j =>
-        let cz := c * a * pow2 j
-        PauliString.mk cz [PauliTerm.mk .Z (qIdx i j)]
-  let diagonal : List PauliString :=
+      varToPauli v.bits (qIdx i) |>.map fun ps =>
+        { ps with coefficient := a * ps.coefficient }
+  -- Construir Σ a_i x_i como Observable
+  let linearExpr : List PauliString :=
     listBind (List.range nVars) fun i =>
-      let v := listGet vars i { coeff := 0, name := "", bits := 0 }
-      let a2 := intToFloat (v.coeff * v.coeff)
-      listBind (List.range v.bits) fun j =>
-        (List.range v.bits).filter (fun l => j < l) |>.map fun l =>
-          PauliString.mk (a2 * pow2 (j + l) / 2.0) [PauliTerm.mk .Z (qIdx i j), PauliTerm.mk .Z (qIdx i l)]
-  let crossed : List PauliString :=
-    listBind (List.range nVars) fun i =>
-      listBind ((List.range nVars).filter (fun k => i < k)) fun k =>
-        let vi := listGet vars i { coeff := 0, name := "", bits := 0 }
-        let vk := listGet vars k { coeff := 0, name := "", bits := 0 }
-        let aik := intToFloat (vi.coeff * vk.coeff)
-        listBind (List.range vi.bits) fun j =>
-          (List.range vk.bits).map fun l =>
-            PauliString.mk (aik * pow2 (j + l) / 2.0) [PauliTerm.mk .Z (qIdx i j), PauliTerm.mk .Z (qIdx k l)]
-  { strings := linear ++ diagonal ++ crossed }
+      let expanded := listGet varExpanded i []
+      expanded.map fun ps => { ps with coefficient := ps.coefficient }
+  -- Construir (Σ a_i x_i)² via multiplicacion explicita
+  let quadExpr : List PauliString :=
+    listBind linearExpr fun psA =>
+      linearExpr.map fun psB => psMul psA psB
+  -- Construir -2c Σ a_i x_i
+  let crossC : List PauliString :=
+    linearExpr.map fun ps =>
+      { ps with coefficient := -2.0 * c * ps.coefficient }
+  -- Agregar constante c² como termino identidad
+  let constTerm : List PauliString :=
+    [{ coefficient := c * c, terms := [] }]
+  let allStrings := constTerm ++ crossC ++ quadExpr
+  -- Combinar terminos con mismos qubits (fusionar coeficientes)
+  { strings := allStrings }
 
+/--
+Coste de una asignacion de variables: (sum a_i * val_i - c)^2.
+-/
 def diophantineCost (eq : Diophantine) (vals : List Int) : Float :=
   let sum := (List.zip eq.vars vals).foldl (fun (acc : Int) ((v, val) : DiophantineVar × Int) =>
     acc + v.coeff * val

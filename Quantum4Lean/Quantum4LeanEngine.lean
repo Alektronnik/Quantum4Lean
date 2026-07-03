@@ -275,10 +275,23 @@ def run (circuit : Circuit n) (seed : UInt64 := DEFAULT_SEED) (shots : Nat := 1)
     Except String (List Nat) := do
   let sv <- StateVector.init n seed
   let finalSv := runCircuit sv circuit
-  let (results, _) := (List.range shots).foldl (fun ((res : List Nat), (cur : StateVector)) (_ : Nat) =>
-    let (bits, next) := measureAll cur
-    (bits :: res, next)
-  ) ([], finalSv)
+  let probs := StateVector.probabilities finalSv
+  let dim := StateVector.dim finalSv
+  -- Muestrear de la distribucion de probabilidad (sin recursion)
+  let (_, results) := (List.range shots).foldl
+    (fun ((s, acc) : UInt64 × List Nat) (_ : Nat) =>
+      let (newS, r) := lcgNext s
+      -- Buscar estado correspondiente en CDF
+      let rec findState (cumProb : Float) (i : Nat) : Nat :=
+        if i >= dim then dim - 1
+        else
+          let newCum := cumProb + probs[i]!
+          if r >= cumProb && r < newCum then i
+          else findState newCum (i + 1)
+      termination_by dim - i
+      let state := findState 0.0 0
+      (newS, state :: acc)
+    ) (seed, [])
   Except.ok results.reverse
 
 def amplitude (sv : StateVector) (i : Nat) : Float × Float :=
