@@ -139,10 +139,10 @@ def bell : Circuit 2 := circuit! {
 
 ```lean
 #eval executeSim bell
--- Except.ok [1, 1]
+-- Except.ok [1]
 ```
 
-El resultado `[1, 1]` indica que ambos qubits colapsaron a `|1>`. El estado Bell produce `|00>` o `|11>` con igual probabilidad.
+El resultado `[1]` indica el estado medido en un shot (Bell colapsa a `|00>` o `|11>`). Con `executeSim` se hace un unico shot.
 
 ### Verificar equivalencia
 
@@ -495,7 +495,7 @@ theorem X_X_eq_I : cliffordEquiv
   native_decide
 ```
 
-Los `sorry` marcan la limitacion conocida: `native_decide` en Lean 4.7.0 no reduce Float. Verificacion runtime via `#eval circuitsEquiv`.
+Los 8 teoremas Clifford estan demostrados con `native_decide` en `Quantum4LeanTheorems.lean`. Las identidades no-Clifford (H, T, RX) se verifican computacionalmente via `circuitsEquiv` con tolerancia `1e-6`.
 
 ---
 
@@ -799,11 +799,18 @@ Reporte incluye analisis gcd(a,b,c) para cada solucion exacta.
 #eval Quantum4LeanPlayground.Beal.report
 ```
 
+### FFI (QuantumPlaygroundFFI)
 
-Motor C++/Metal hasta 30 qubits. Requiere `bash build_ffi.sh`.
+Motor C++/Metal. CPU: hasta 25 qubits (~1 GB). Metal GPU: Apple Silicon.
 
-```lean
-#eval Quantum4LeanPlayground.FFI.report
+```bash
+# CPU
+bash buildCPU.sh && lake build quantum4lean-ffi
+.lake/build/bin/quantum4lean-ffi
+
+# Metal
+bash buildMetal.sh && LEAN_CC=clang lake build quantum4lean-ffi-metal
+.lake/build/bin/quantum4lean-ffi-metal
 ```
 
 ### Tijdeman Cuantico (QuantumPlaygroundTijdeman)
@@ -918,10 +925,10 @@ C++ (QuantumKitCore.mm)
 
 ```bash
 # Modo CPU (recomendado, enlaza con ld64.lld):
-bash build_cpu_ffi.sh && lake build quantum4lean-ffi
+bash buildCPU.sh && lake build quantum4lean-ffi
 
 # Modo Metal (requiere clang del sistema + frameworks Apple):
-bash build_ffi.sh && LEAN_CC=clang lake build quantum4lean-ffi
+bash buildMetal.sh && LEAN_CC=clang lake build quantum4lean-ffi-metal
 ```
 
 ### Estado actual
