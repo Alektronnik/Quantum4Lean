@@ -37,15 +37,13 @@ def evalCost (eq : PolyEquation) (vals : List Int) : Float :=
            else -(((-eq.constant).toNat.toFloat))
   -- Evaluar cada monomio
   let evalMonom (m : Monomial) : Float :=
-    let prod := m.exponents.foldl (fun (acc : Float) ((vi, exp) : Nat × Nat) =>
+    let prod := m.exponents.foldl (fun (acc : Float) ((vi, e) : Nat × Nat) =>
       let v := vals.get! vi
       let vf := if v >= 0 then v.toNat.toFloat else -(((-v).toNat.toFloat))
-      let p := match exp with
-        | 0 => 1.0
-        | 1 => vf
-        | 2 => vf * vf
-        | 3 => vf * vf * vf
-        | _ => vf * vf * vf  -- truncado
+      let p := if e == 0 then 1.0
+               else if e == 1 then vf
+               else if e == 2 then vf * vf
+               else vf * vf * vf
       acc * p
     ) 1.0
     let mc := if m.coefficient >= 0 then m.coefficient.toNat.toFloat
@@ -315,7 +313,7 @@ def reportQAOA : IO String := do
   let c := tijdemanCase
   let (energy, solutions) := qaoaSolve c.equation
   let best := match solutions.head? with
-    | some (vals, e) => formatSolution vals ["x", "y"]
+    | some (vals, _) => formatSolution vals ["x", "y"]
     | none => "(sin solucion)"
   return s!"QAOA Tijdeman:
   | Energia VQE final: {energy}
