@@ -233,7 +233,7 @@ def report : String :=
   let header := "RESONANCIA DE RIEMANN: Primos + Cuantica\n"
   let info := s!"Primos: {ps.length} generados\n"
   let info := info ++ s!"Δ²g (primeros 10): {d2g.take 10}\n"
-  let info := info ++ s!"PVE = {pve}\n\n"
+  let info := info ++ s!"PVE = {_pve}\n\n"
   let info := info ++ "Fidelidad del gato GHZ (nQubits=5, steps=5, dt=0.5):\n"
   let info := info ++ "  alpha  1erOrden  2oOrden(Suzuki)\n"
   let info := info ++ "  -----  ---------  ---------------\n"
