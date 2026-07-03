@@ -39,7 +39,7 @@ Quantum4Lean es una plataforma de computacion cuantica verificada en Lean 4. Pro
 - **Transpilador verificado**: optimizacion con preservacion de semantica
 - **Fuzzer intra-Lean**: tests algebraicos + aleatorios
 - **DSL declarativo**: `circuit! { H q[0]; CNOT q[0] q[1] }`
-- **Cero dependencias externas**: `lake build` autocontenido
+- **Cero dependencias externas**: `lake build quantum4lean-test` + `./.lake/build/bin/quantum4lean-test`
 
 ### Filosofia
 
@@ -973,8 +973,8 @@ Quantum4Lean/
 |   +-- Quantum4LeanTactic.lean    -- circuit_equiv, quantum_simp
 |   +-- Quantum4LeanDiophantine.lean-- Traductor diofantino lineal
 |   +-- Quantum4LeanPolynomial.lean -- Traductor polinomico
+|   +-- Quantum4LeanSolver.lean     -- Utilidades compartidas
 |   +-- Quantum4LeanRunner.lean    -- Ejecutable de tests
-|   +-- (8 modulos conservados)    -- FFI, Monad, Compile, Sim, etc.
 +-- Quantum4LeanPlayground.lean    -- Root del Playground
 +-- Quantum4LeanPlayground/
 |   +-- QuantumPlaygroundDiophantine.lean -- Solver diofantino
@@ -982,6 +982,7 @@ Quantum4Lean/
 |   +-- QuantumPlaygroundTijdeman.lean    -- Tijdeman QAOA
 |   +-- QuantumPlaygroundRiemann.lean     -- Riemann
 |   +-- QuantumPlaygroundTRDU.lean        -- TRDU
+|   +-- QuantumPlaygroundFFI.lean         -- FFI (Metal 3)
 +-- .github/workflows/ci.yml       -- Integracion Continua
 +-- lakefile.lean                  -- Build autocontenido
 +-- README.md                      -- Documentacion
