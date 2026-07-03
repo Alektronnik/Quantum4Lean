@@ -8,18 +8,21 @@ on:
 
 jobs:
   build-and-test:
-    name: Build + Fuzz + Unitary
+    name: Build + Fuzz + Unitary + Density + QASM
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
       - name: Install elan (Lean version manager)
         run: |
-          curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y --default-toolchain leanprover/lean4:4.7.0
+          curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y --default-toolchain leanprover/lean4:v4.31.0
           echo "$HOME/.elan/bin" >> $GITHUB_PATH
 
-      - name: Build
+      - name: Build library
         run: lake build
 
+      - name: Build tests
+        run: lake build quantum4lean-test
+
       - name: Run tests
-        run: ./build/bin/quantum4lean-test
+        run: .lake/build/bin/quantum4lean-test
