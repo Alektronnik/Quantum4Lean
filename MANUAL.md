@@ -1097,6 +1097,7 @@ Quantum4Lean/
 |   +-- Quantum4LeanVerify.lean     -- Verificacion formal de circuitos
 |   +-- Quantum4LeanQASM.lean       -- Exportador OpenQASM 3.0
 |   +-- Quantum4LeanDensity.lean    -- Density Matrix + ruido NISQ
+|   +-- Quantum4LeanFFI.lean        -- Puente @[extern] (FloatArray)
 |   +-- Quantum4LeanRunner.lean    -- Ejecutable de tests
 +-- Quantum4LeanPlayground.lean    -- Root del Playground
 +-- Quantum4LeanPlayground/

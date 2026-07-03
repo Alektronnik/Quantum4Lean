@@ -24,10 +24,6 @@ Quantum4Lean (21 modulos)
 Quantum4LeanPlayground (6 demos)
   Diophantine, Beal, Tijdeman, Riemann, TRDU, FFI
 ```
-+-- QuantumPlaygroundTijdeman     -- Tijdeman QAOA
-+-- QuantumPlaygroundRiemann      -- Riemann + Cuantica
-+-- QuantumPlaygroundTRDU         -- TRDU-Q
-```
 
 ## Uso rapido
 
