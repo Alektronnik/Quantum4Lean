@@ -1,6 +1,6 @@
 # Quantum4Lean -- Manual de Usuario
 
-v0.6.0. Julio 2026.
+v0.6.1. Julio 2026.
 
 ## Indice
 
@@ -18,9 +18,10 @@ v0.6.0. Julio 2026.
 12. [Fuzzer Intra-Lean](#12-fuzzer-intra-lean)
 13. [Traductor Diofantino](#13-traductor-diofantino)
 14. [Traductor Polinomico](#14-traductor-polinomico)
-15. [Playground](#15-playground)
-16. [API de Referencia](#16-api-de-referencia)
-17. [Arquitectura del Proyecto](#17-arquitectura-del-proyecto)
+15. [ADAM Optimizer](#15-adam-optimizer)
+16. [Playground](#16-playground)
+17. [API de Referencia](#17-api-de-referencia)
+18. [Arquitectura del Proyecto](#18-arquitectura-del-proyecto)
 
 ---
 
@@ -31,7 +32,8 @@ Quantum4Lean es una plataforma de computacion cuantica verificada en Lean 4. Pro
 - **Motor de simulacion puro-Lean** bit-exacto con CoreQU4TRIX (C++/Metal)
 - **Stack NISQ completo**: StateVector, Observables, VQE, QAOA
 - **Traductor diofantino**: ecuaciones lineales a Hamiltonianos Ising
-- **Traductor polinomico**: monomios con exponentes <= 3 (Tijdeman, Pillai)
+- **Traductor polinomico**: monomios con exponentes <= 3 (Tijdeman, Pillai, Beal)
+- **ADAM Optimizer**: VQE con momentum y learning rate adaptativo
 - **Verificacion formal**: matrices unitarias, equivalencia semantica, tacticas
 - **Simplificador simbolico**: reescritura de circuitos sobre el AST (N arbitrario)
 - **Transpilador verificado**: optimizacion con preservacion de semantica
@@ -708,15 +710,48 @@ let n := polyTotalQubits eq  -- 8
 
 ---
 
-## 15. Playground
+## 15. ADAM Optimizer
 
-Demostraciones avanzadas que extienden la libreria. Se importan por separado:
+VQE con optimizador ADAM (Adaptive Moment Estimation). Superior a SGD
+en landscapes rugosos como los Hamiltonianos diofantinos.
+
+### Algoritmo
+
+```
+m_t = beta1 * m_{t-1} + (1 - beta1) * g_t
+v_t = beta2 * v_{t-1} + (1 - beta2) * g_t^2
+m_hat = m_t / (1 - beta1^t)
+v_hat = v_t / (1 - beta2^t)
+theta = theta - lr * m_hat / (sqrt(v_hat) + eps)
+```
+
+### Uso
+
+```lean
+let H := polyToIsing eq
+let initialParams := List.replicate 8 0.1
+-- ADAM: mejor convergencia que VQE estandar
+let (energy, params, history) := adamVQE ansatz H initialParams 0.01 200
+
+-- Paso manual de ADAM (para optimizacion custom)
+let (newParams, newM, newV) := adamStep params m v grad 0.01 0.9 0.999 1e-8 t
+```
+
+Parametros por defecto: lr=0.01, beta1=0.9, beta2=0.999, eps=1e-8.
+
+---
+
+## 16. Playground
+
+Demostraciones avanzadas. Namespace: `Quantum4LeanPlayground.*`.
 
 ```lean
 import Quantum4LeanPlayground
 
-#eval Quantum4LeanPlayground.DiophantineSolver.report
-#eval Quantum4LeanPlayground.Tijdeman.report
+#eval Quantum4LeanPlayground.Diophantine.report   -- 4 casos
+#eval Quantum4LeanPlayground.Beal.report          -- 3 escalas
+#eval Quantum4LeanPlayground.Fuzz.report          -- tests aleatorios
+#eval Quantum4LeanPlayground.Tijdeman.report      -- QAOA dedicado
 ```
 
 ### Solver Diofantino (QuantumPlaygroundDiophantine)
@@ -762,7 +797,7 @@ Solucion dedicada de $x^2 = y^3 + 1$ via QAOA con ansatz optimizado.
 
 ---
 
-## 16. API de Referencia
+## 17. API de Referencia
 
 ### Tipos publicos
 
@@ -908,7 +943,7 @@ Disponibles tras `import Quantum4Lean`. No requieren `open`.
 
 ---
 
-## 17. Arquitectura del Proyecto
+## 18. Arquitectura del Proyecto
 
 ```
 Quantum4Lean/

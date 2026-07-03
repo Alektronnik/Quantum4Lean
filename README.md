@@ -2,7 +2,7 @@
 
 Computacion cuantica verificada en Lean 4. Motor puro-Lean bit-exacto con CoreQU4TRIX (C++/Metal). Stack NISQ completo: StateVector, Observables, VQE, QAOA. DSL declarativo, tactica `circuit_equiv` y fuzzer intra-Lean.
 
-Estado: v0.6.0 -- 18 modulos activos, build autocontenido, 224 tests (208 fuzz + 16 teoremas).
+Estado: v0.6.1 -- 15 modulos activos (+7 conservados), 7 playgrounds, 224 tests (208 fuzz + 16 teoremas).
 
 ## Build
 
@@ -25,10 +25,11 @@ Cero dependencias externas. Solo requiere Lean 4 (v4.7.0).
     |       |       |       |
    DSL   Tactic   Simp  Transpile  Clifford
 
-Quantum4LeanPlayground/          -- Demostraciones
-+-- QuantumPlaygroundDiophantine  -- Solver diofantino
-+-- QuantumPlaygroundBeal         -- Conjetura de Beal
-+-- QuantumPlaygroundFFI          -- FFI Metal 3
+Quantum4LeanPlayground/          -- Demostraciones (7 modulos)
++-- QuantumPlaygroundDiophantine  -- Solver diofantino (4 casos)
++-- QuantumPlaygroundFuzz         -- Fuzzer diofantino
++-- QuantumPlaygroundBeal         -- Conjetura de Beal (3 escalas)
++-- QuantumPlaygroundFFI          -- FFI Metal 3 (30 qubits)
 +-- QuantumPlaygroundTijdeman     -- Tijdeman QAOA
 +-- QuantumPlaygroundRiemann      -- Riemann + Cuantica
 +-- QuantumPlaygroundTRDU         -- TRDU-Q
@@ -258,19 +259,23 @@ Quantum4Lean/
 |   +-- Quantum4LeanSimp.lean      -- Simplificador (12 reglas)
 |   +-- Quantum4LeanTranspile.lean -- Transpilador (8 teoremas)
 |   +-- Quantum4LeanClifford.lean  -- Verificacion Clifford (Z[i])
-|   +-- Quantum4LeanDiophantine.lean-- Traductor Diofantino
-|   +-- Quantum4LeanPolynomial.lean -- Traductor Polinomico
+|   +-- Quantum4LeanDiophantine.lean-- Traductor diofantino lineal
+|   +-- Quantum4LeanPolynomial.lean -- Traductor polinomico
+|   +-- Quantum4LeanFFI.lean        -- Bindings @[extern]
 |   +-- Quantum4LeanRunner.lean    -- Ejecutable de tests
-|   +-- (7 modulos conservados)
+|   +-- (6 modulos conservados)    -- Compile, Examples, Monad, Sim, Test, Verify
 +-- Quantum4LeanPlayground.lean    -- Root del Playground
 +-- Quantum4LeanPlayground/
-|   +-- QuantumPlaygroundDiophantine.lean -- Solver diofantino
-|   +-- QuantumPlaygroundBeal.lean        -- Beal (3 escalas)
-|   +-- QuantumPlaygroundFFI.lean         -- FFI Metal 3
-|   +-- QuantumPlaygroundTijdeman.lean    -- Tijdeman QAOA
-|   +-- QuantumPlaygroundRiemann.lean     -- Riemann
-|   +-- QuantumPlaygroundTRDU.lean        -- TRDU
-+-- Quantum4LeanBridge/            -- Puente C (FFI opcional)
+|   +-- QuantumPlaygroundDiophantine.lean
+|   +-- QuantumPlaygroundFuzz.lean
+|   +-- QuantumPlaygroundBeal.lean
+|   +-- QuantumPlaygroundFFI.lean
+|   +-- QuantumPlaygroundTijdeman.lean
+|   +-- QuantumPlaygroundRiemann.lean
+|   +-- QuantumPlaygroundTRDU.lean
++-- Quantum4LeanBridge/            -- Puente C (FFI)
+|   +-- Quantum4LeanFFI.h / .c
++-- build_ffi.sh                   -- Compila lib FFI
 +-- .github/workflows/ci.yml       -- CI
 +-- README.md
 +-- MANUAL.md
