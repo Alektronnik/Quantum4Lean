@@ -43,7 +43,7 @@ private def pow2 (n : Nat) : Float :=
   | 0 => 1.0
   | n+1 => 2.0 * pow2 n
 
-private def listGet (xs : List α) (i : Nat) (d : α) : α := xs.get? i |>.getD d
+private def listGet (xs : List α) (i : Nat) (d : α) : α := xs[i]? |>.getD d
 
 private def listMapIdx {α β : Type} (f : Nat -> α -> β) : List α -> List β :=
   let rec go (i : Nat) : List α -> List β
@@ -57,26 +57,26 @@ def toIsing (eq : Diophantine) (bitsPerVar : Nat := 4) : Observable :=
   let c := intToFloat eq.constant
   let qIdx (i j : Nat) : Nat := i * bitsPerVar + j
   let linear : List PauliString :=
-    (List.range nVars).bind fun i =>
+    listBind (List.range nVars) fun i =>
       let v := listGet vars i { coeff := 0, name := "", bits := 0 }
       let a := intToFloat v.coeff
       (List.range v.bits).map fun j =>
         let cz := c * a * pow2 j
         PauliString.mk cz [PauliTerm.mk .Z (qIdx i j)]
   let diagonal : List PauliString :=
-    (List.range nVars).bind fun i =>
+    listBind (List.range nVars) fun i =>
       let v := listGet vars i { coeff := 0, name := "", bits := 0 }
       let a2 := intToFloat (v.coeff * v.coeff)
-      (List.range v.bits).bind fun j =>
+      listBind (List.range v.bits) fun j =>
         (List.range v.bits).filter (fun l => j < l) |>.map fun l =>
           PauliString.mk (a2 * pow2 (j + l) / 2.0) [PauliTerm.mk .Z (qIdx i j), PauliTerm.mk .Z (qIdx i l)]
   let crossed : List PauliString :=
-    (List.range nVars).bind fun i =>
-      (List.range nVars).filter (fun k => i < k) |>.bind fun k =>
+    listBind (List.range nVars) fun i =>
+      listBind ((List.range nVars).filter (fun k => i < k)) fun k =>
         let vi := listGet vars i { coeff := 0, name := "", bits := 0 }
         let vk := listGet vars k { coeff := 0, name := "", bits := 0 }
         let aik := intToFloat (vi.coeff * vk.coeff)
-        (List.range vi.bits).bind fun j =>
+        listBind (List.range vi.bits) fun j =>
           (List.range vk.bits).map fun l =>
             PauliString.mk (aik * pow2 (j + l) / 2.0) [PauliTerm.mk .Z (qIdx i j), PauliTerm.mk .Z (qIdx k l)]
   { strings := linear ++ diagonal ++ crossed }
@@ -103,7 +103,7 @@ def diophantineBruteForce (eq : Diophantine) (tolerance : Float := 1e-6)
       | v :: vs => acc :: offsetGo (acc + v.bits) vs
     offsetGo 0 eq.vars
   let decodeOne (state : Nat) (i : Nat) (v : DiophantineVar) : (String × Int) :=
-    let start := offsets.get! i
+    let start := offsets[i]!
     let val : Int := (List.range v.bits).foldl (fun (acc : Int) (j : Nat) =>
       if ((state >>> (start + j)) &&& 1) == 1 then acc + ((1 <<< j : Nat) : Int) else acc
     ) 0
@@ -176,7 +176,7 @@ def decodeValues (eq : Diophantine) (bitsPerVar : Nat) (sv : StateVector) : List
   let (maxIdx, _) : Nat × Float :=
     (List.range totalDim).foldl
       (fun ((bestIdx, bestProb) : Nat × Float) (idx : Nat) =>
-        let p : Float := probs.get! idx
+        let p : Float := probs[idx]!
         if p > bestProb then (idx, p) else (bestIdx, bestProb)
       ) (0, 0.0)
   listMapIdx (fun i (v : DiophantineVar) =>

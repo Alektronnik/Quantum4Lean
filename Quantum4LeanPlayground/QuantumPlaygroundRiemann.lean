@@ -122,10 +122,10 @@ private def applyX (n : Nat) (i : Nat) (dt : Float) : Circuit n :=
 Trotter 1er orden: ZZ secuencial + X con pesos primos.
 -/
 def step1stVolcanic (n : Nat) (dt : Float) (alpha : Float) (d2g : List Int) : Circuit n :=
-  let gatesZZ := (List.range (n - 1)).bind fun i =>
+  let gatesZZ := listBind (List.range (n - 1)) fun i =>
     (applyZZ n i dt).gates
-  let gatesX := (List.range n).bind fun i =>
-    let absVal := if d2g.get! i >= 0 then d2g.get! i else -d2g.get! i
+  let gatesX := listBind (List.range n) fun i =>
+    let absVal := if d2g[i]! >= 0 then d2g[i]! else -d2g[i]!
     let h_i := alpha * (if i < d2g.length then absVal.toNat.toFloat else 0.0)
     (applyX n i (h_i * dt)).gates
   { gates := gatesZZ ++ gatesX }
@@ -136,12 +136,12 @@ El palindromo resuena con la autorregulacion prima (CE=0.562).
 -/
 def step2ndVolcanic (n : Nat) (dt : Float) (alpha : Float) (d2g : List Int) : Circuit n :=
   let half := dt / 2.0
-  let gatesZZ1 := (List.range (n - 1)).bind fun i => (applyZZ n i half).gates
-  let gatesX := (List.range n).bind fun i =>
-    let absVal := if d2g.get! i >= 0 then d2g.get! i else -d2g.get! i
+  let gatesZZ1 := listBind (List.range (n - 1)) fun i => (applyZZ n i half).gates
+  let gatesX := listBind (List.range n) fun i =>
+    let absVal := if d2g[i]! >= 0 then d2g[i]! else -d2g[i]!
     let h_i := alpha * (if i < d2g.length then absVal.toNat.toFloat else 0.0)
     (applyX n i (h_i * dt)).gates
-  let gatesZZ2 := (List.range (n - 1)).bind fun i => (applyZZ n i half).gates
+  let gatesZZ2 := listBind (List.range (n - 1)) fun i => (applyZZ n i half).gates
   { gates := gatesZZ1 ++ gatesX ++ gatesZZ2 }
 
 -- ===================================================================
@@ -152,7 +152,7 @@ def step2ndVolcanic (n : Nat) (dt : Float) (alpha : Float) (d2g : List Int) : Ci
 def catPrep (n : Nat) : Circuit n :=
   if hn : n ≥ 1 then
     let q0 := Qubit.mk ⟨0, by omega⟩
-    let ghzGates := (List.range (n - 1)).bind fun i =>
+    let ghzGates := listBind (List.range (n - 1)) fun i =>
       if hi : i < n then
         if hi1 : i + 1 < n then
           [Gate.CNOT (Qubit.mk ⟨i, hi⟩) (Qubit.mk ⟨i+1, hi1⟩)]
@@ -166,7 +166,7 @@ def catPrep (n : Nat) : Circuit n :=
 def catUnprep (n : Nat) : Circuit n :=
   if hn : n ≥ 1 then
     let q0 := Qubit.mk ⟨0, by omega⟩
-    let gates := (List.range (n - 1)).reverse.bind fun i =>
+    let gates := listBind ((List.range (n - 1)).reverse) fun i =>
       if hi : i < n then
         if hi1 : i + 1 < n then
           [Gate.CNOT (Qubit.mk ⟨i, hi⟩) (Qubit.mk ⟨i+1, hi1⟩)]

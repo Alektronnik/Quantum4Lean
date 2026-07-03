@@ -24,7 +24,7 @@ def decodeState (varBits : List Nat) (state : Nat) : List Int :=
   let rec valueGo (i : Nat) : List Nat -> List Int
     | [] => []
     | bits :: rest =>
-      let start := offsets.get! i
+      let start := offsets[i]!
       let valNat := (List.range bits).foldl (fun (acc : Nat) (j : Nat) =>
         if ((state >>> (start + j)) &&& 1) == 1 then acc + (1 <<< j) else acc
       ) 0
@@ -35,7 +35,7 @@ def evalCost (eq : PolyEquation) (vals : List Int) : Float :=
   let c := intToFloat eq.constant
   let evalMonom (m : Monomial) : Float :=
     let prod := m.exponents.foldl (fun (acc : Float) ((vi, e) : Nat × Nat) =>
-      let v := vals.get! vi
+      let v := vals[vi]!
       let vf := intToFloat v
       let p := if e == 0 then 1.0
                else if e == 1 then vf
@@ -102,7 +102,7 @@ def generateWithSolution (numVars : Nat) (maxBits : Nat) (seed : Nat)
     ) ([], s2)
   let polyVal := ms.foldl (fun (acc : Int) (m : Monomial) =>
     let prod := m.exponents.foldl (fun (p : Int) ((vi, e) : Nat × Nat) =>
-      let sv := solution.get! vi
+      let sv := solution[vi]!
       let vp := (List.range e).foldl (fun (pv : Int) _ => pv * sv) 1
       p * vp
     ) 1
@@ -129,7 +129,7 @@ def runDiophantineFuzz (numTests : Nat := 50) (maxVars : Nat := 3) (maxBits : Na
       let exact := solutions.filter fun (_, e) => e < 1e-6
       let foundExpected := exact.any fun (vals, _) =>
         vals.length == sol.length &&
-        (List.range vals.length).all fun i => vals.get! i == sol.get! i
+        (List.range vals.length).all fun i => vals[i]! == sol[i]!
       let result : DiophantineFuzzResult :=
         { testName := name, passed := foundExpected, equation := eq, solution := sol, found := exact }
       (rs ++ [result], s')

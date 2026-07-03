@@ -77,8 +77,8 @@ def identity (n : Nat) : UnitaryMatrix n :=
   { rows := (List.range d).map row, dim := d }
 
 def get {n : Nat} (u : UnitaryMatrix n) (i j : Nat) : Complex :=
-  match u.rows.get? i with
-  | some row => row.get? j |>.getD Complex.zero
+  match u.rows[i]? with
+  | some row => row[j]? |>.getD Complex.zero
   | none => Complex.zero
 
 def mul {n : Nat} (a b : UnitaryMatrix n) : UnitaryMatrix n :=
@@ -159,10 +159,10 @@ private def expand1Q {n : Nat} (g : List Complex) (q : Nat) : UnitaryMatrix n :=
   let dMinusOne := d - 1
   let mask := 1 <<< q
   let notMask := dMinusOne ^^^ mask
-  let g00 := g.get? 0 |>.getD co
-  let g01 := g.get? 1 |>.getD cz
-  let g10 := g.get? 2 |>.getD cz
-  let g11 := g.get? 3 |>.getD co
+  let g00 := g[0]? |>.getD co
+  let g01 := g[1]? |>.getD cz
+  let g10 := g[2]? |>.getD cz
+  let g11 := g[3]? |>.getD co
   let row (i : Nat) : List Complex :=
     (List.range d).map fun j =>
       if (i ^^^ j) &&& notMask == 0 then
@@ -224,8 +224,8 @@ private def gateMatrix {n : Nat} (g : Gate n) : UnitaryMatrix n :=
   | .RY q theta => expand1Q (gateRY theta) q.idx.val
   | .RZ q theta => expand1Q (gateRZ theta) q.idx.val
   | .Unitary q matrix =>
-    let m : List Complex := [mkC (matrix.get! 0) (matrix.get! 1), mkC (matrix.get! 2) (matrix.get! 3),
-                             mkC (matrix.get! 4) (matrix.get! 5), mkC (matrix.get! 6) (matrix.get! 7)]
+    let m : List Complex := [mkC (matrix[0]!) (matrix[1]!), mkC (matrix[2]!) (matrix[3]!),
+                             mkC (matrix[4]!) (matrix[5]!), mkC (matrix[6]!) (matrix[7]!)]
     expand1Q m q.idx.val
 
 -- ===================================================================

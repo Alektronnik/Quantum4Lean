@@ -132,13 +132,13 @@ private def checkAmplitudeEq (sv : StateVector) (idx : Nat) (expectedRe expected
 
 private def checkNorm (sv : StateVector) (tol : Float) : Bool :=
   let total := (List.range (StateVector.probabilities sv).size).foldl
-    (fun (acc : Float) (i : Nat) => acc + (StateVector.probabilities sv).get! i) 0.0
+    (fun (acc : Float) (i : Nat) => acc + (StateVector.probabilities sv)[i]!) 0.0
   floatAbs (total - 1.0) <= tol
 
 private def svEqual (sv1 sv2 : StateVector) (tol : Float) : Bool :=
   sv1.numQubits == sv2.numQubits &&
   (List.range (2 * sv1.dim)).all fun (i : Nat) =>
-    floatAbs (sv1.data.get! i - sv2.data.get! i) <= tol
+    floatAbs (sv1.data[i]! - sv2.data[i]!) <= tol
 
 -- ===================================================================
 -- Tests de identidad de puertas
@@ -158,7 +158,7 @@ def testGateIdentities : List String :=
     ("S^4",    s4Circuit n h0),
     ("T^8",    t8Circuit n h0)
   ]
-  tests.bind fun (name, c) =>
+  listBind tests fun (name, c) =>
     match StateVector.init n with
     | Except.error e => [s!"{name}: init: {e}"]
     | Except.ok sv0 =>

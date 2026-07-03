@@ -15,6 +15,8 @@ Modulos activos:
   Quantum4LeanDSL         Macro circuit!, q[i], Shortcuts
   Quantum4LeanTactic      circuit_equiv, quantum_simp
   Quantum4LeanPolynomial  Traductor polinomico (monomios <= 3)
+  Quantum4LeanSolver      Utilidades compartidas
+  Quantum4LeanVerify      Verificacion formal de circuitos
 -/
 
 import Quantum4Lean.Quantum4LeanCore
@@ -33,6 +35,7 @@ import Quantum4Lean.Quantum4LeanDSL
 import Quantum4Lean.Quantum4LeanTactic
 import Quantum4Lean.Quantum4LeanPolynomial
 import Quantum4Lean.Quantum4LeanSolver
+import Quantum4Lean.Quantum4LeanVerify
 
 export Quantum4Lean (Qubit Gate Circuit StateVector
   executeSim executeSimProbs

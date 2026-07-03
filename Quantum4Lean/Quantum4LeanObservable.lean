@@ -156,7 +156,7 @@ def expectPauliString (sv : StateVector) (ps : PauliString) : Float :=
 
   -- 3. Calcular <Z_product> = sum_i parity(i) * P(i)
   let expectZ := (List.range dim).foldl (fun (acc : Float) (i : Nat) =>
-    let prob := probs.get! i
+    let prob := probs[i]!
     let parity := ps.terms.foldl (fun (par : Float) (t : PauliTerm) =>
       match t.pauli with
       | .Z | .X | .Y =>

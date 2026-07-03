@@ -70,8 +70,8 @@ def identity (n : Nat) : CliffordMatrix n :=
   { entries := (List.range d).map row, dim := d }
 
 def get {n : Nat} (m : CliffordMatrix n) (i j : Nat) : CliffordAmplitude :=
-  match m.entries.get? i with
-  | some row => row.get? j |>.getD CliffordAmplitude.zero
+  match m.entries[i]? with
+  | some row => row[j]? |>.getD CliffordAmplitude.zero
   | none => CliffordAmplitude.zero
 
 def mul {n : Nat} (a b : CliffordMatrix n) : CliffordMatrix n :=
@@ -116,10 +116,10 @@ private def expand1Q {n : Nat} (g : List CliffordAmplitude) (q : Nat) : Clifford
   let dMinusOne := d - 1
   let mask := 1 <<< q
   let notMask := dMinusOne ^^^ mask
-  let g00 := g.get? 0 |>.getD (cA 1 0)
-  let g01 := g.get? 1 |>.getD (cA 0 0)
-  let g10 := g.get? 2 |>.getD (cA 0 0)
-  let g11 := g.get? 3 |>.getD (cA 1 0)
+  let g00 := g[0]? |>.getD (cA 1 0)
+  let g01 := g[1]? |>.getD (cA 0 0)
+  let g10 := g[2]? |>.getD (cA 0 0)
+  let g11 := g[3]? |>.getD (cA 1 0)
   let row (i : Nat) : List CliffordAmplitude :=
     (List.range d).map fun j =>
       if (i ^^^ j) &&& notMask == 0 then

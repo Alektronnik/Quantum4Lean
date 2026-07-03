@@ -75,7 +75,7 @@ def testOptimization (c : Circuit n) : Except String Bool :=
     let tol : Float := 1e-12
     let sz := Array.size probsOrig
     let eq := (List.range sz).all fun i =>
-      let diff := (probsOrig.get! i) - (probsOpt.get! i)
+      let diff := (probsOrig[i]!) - (probsOpt[i]!)
       (if diff > 0.0 then diff else -diff) <= tol
     Except.ok eq
 

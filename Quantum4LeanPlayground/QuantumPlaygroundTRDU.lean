@@ -77,15 +77,15 @@ private def applyX (n : Nat) (i : Nat) (dt : Float) : Circuit n :=
 private def suzuki2Step (n : Nat) (dt : Float) (jScale : Float) : Circuit n :=
   let jDt := jScale * dt
   let hDt := 0.5 * jScale * dt
-  let gatesZZ := (List.range (n - 1)).bind fun i => (applyZZ n i jDt).gates
-  let gatesX := (List.range n).bind fun i => (applyX n i hDt).gates
+  let gatesZZ := listBind (List.range (n - 1)) fun i => (applyZZ n i jDt).gates
+  let gatesX := listBind (List.range n) fun i => (applyX n i hDt).gates
   { gates := gatesZZ ++ gatesX }
 
 /-- Prepara gato GHZ de n qubits. --/
 private def catPrep (n : Nat) : Circuit n :=
   if hn : n ≥ 1 then
     let q0 := Qubit.mk ⟨0, by omega⟩
-    let gates := (List.range (n - 1)).bind fun i =>
+    let gates := listBind (List.range (n - 1)) fun i =>
       if hi : i < n then
         if hi1 : i + 1 < n then
           [Gate.CNOT (Qubit.mk ⟨i, hi⟩) (Qubit.mk ⟨i+1, hi1⟩)]
@@ -98,7 +98,7 @@ private def catPrep (n : Nat) : Circuit n :=
 private def catUnprep (n : Nat) : Circuit n :=
   if hn : n ≥ 1 then
     let q0 := Qubit.mk ⟨0, by omega⟩
-    let gates := (List.range (n - 1)).reverse.bind fun i =>
+    let gates := listBind ((List.range (n - 1)).reverse) fun i =>
       if hi : i < n then
         if hi1 : i + 1 < n then
           [Gate.CNOT (Qubit.mk ⟨i, hi⟩) (Qubit.mk ⟨i+1, hi1⟩)]
