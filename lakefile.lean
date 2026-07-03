@@ -10,7 +10,7 @@ Stack NISQ completo: StateVector, Observables, VQE, QAOA.
 Fuzzer intra-Lean, verificacion semantica (UnitaryMatrix).
 
 Build autocontenido. Cero dependencias externas.
-  lake build && ./build/bin/quantum4lean-test
+  lake build && .lake/build/bin/quantum4lean-test
 
 Puente FFI a Apple Silicon/Metal 3 opcional.
 -/
@@ -24,7 +24,7 @@ lean_lib «Quantum4Lean» where
 
 /--
 Ejecutable de validacion: tests unitarios + fuzzer.
-  lake build && ./build/bin/quantum4lean-test
+  lake build && .lake/build/bin/quantum4lean-test
 -/
 lean_exe «quantum4lean-test» where
   root := `Quantum4Lean.Quantum4LeanRunner
@@ -43,7 +43,8 @@ Ejecutable FFI (CPU-only): puente a motor C++ sin Metal.
 lean_exe «quantum4lean-ffi» where
   root := `Quantum4LeanPlayground.QuantumPlaygroundFFICPU
   -- Requiere LEAN_CC=clang. La ruta a libgmp se deriva de __dir__.
-  -- Si el path cambia, ajusta elanLibDir a tu toolchain Lean.
+  -- Si el repo esta a profundidad != 3 desde $HOME, reemplaza elanLibDir
+  -- por tu ruta absoluta: "/Users/tu/.elan/toolchains/leanprover--lean4---v4.31.0/lib"
   moreLinkArgs :=
     let elanLibDir := (ToString.toString __dir__) ++ "/../../../.elan/toolchains/leanprover--lean4---v4.31.0/lib"
     #["-L.", "-lQuantum4LeanCPU", "-L", elanLibDir, "-lgmp"]

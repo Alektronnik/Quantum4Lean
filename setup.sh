@@ -1,10 +1,12 @@
 #!/bin/bash
 # setup.sh
 # Configura el entorno para Quantum4Lean FFI.
-# Clona QuantumKit si no existe y compila las librerias.
+# Requiere ../QuantumKit con el motor C++. Si no existe:
+#   - Clonalo manualmente en ../QuantumKit
+#   - O ajusta QUANTUMKIT_DIR abajo
 #
 # Uso:
-#   bash setup.sh          -- todo (clone + CPU + Metal)
+#   bash setup.sh          -- CPU + Metal
 #   bash setup.sh cpu      -- solo CPU
 #   bash setup.sh metal    -- solo Metal
 
@@ -15,19 +17,19 @@ QUANTUMKIT_DIR="$SCRIPT_DIR/../QuantumKit"
 
 echo "=== Quantum4Lean Setup ==="
 
-# 1. Clonar QuantumKit si no existe
+# 1. Verificar QuantumKit
 if [ ! -d "$QUANTUMKIT_DIR" ]; then
-  echo "[1/2] Clonando QuantumKit..."
-  cd "$SCRIPT_DIR/.."
-  git clone https://github.com/usuario/QuantumKit.git 2>/dev/null || {
-    echo "ERROR: No se pudo clonar QuantumKit."
-    echo "Asegurate de que el repositorio existe en ../QuantumKit"
-    echo "o clonalo manualmente."
-    exit 1
-  }
-else
-  echo "[1/2] QuantumKit ya existe en $QUANTUMKIT_DIR"
+  echo "ERROR: QuantumKit no encontrado en $QUANTUMKIT_DIR"
+  echo ""
+  echo "Quantum4Lean FFI requiere el motor C++ de QuantumKit."
+  echo "Clonalo junto a este repositorio:"
+  echo "  cd $(dirname "$SCRIPT_DIR")"
+  echo "  git clone <url-de-QuantumKit> QuantumKit"
+  echo ""
+  echo "O ajusta la variable QUANTUMKIT_DIR en este script."
+  exit 1
 fi
+echo "[1/2] QuantumKit encontrado en $QUANTUMKIT_DIR"
 
 # 2. Compilar librerias
 echo "[2/2] Compilando librerias..."
@@ -41,14 +43,9 @@ case "$MODE" in
   metal)
     bash buildMetal.sh
     ;;
-  all)
-    bash buildCPU.sh
-    bash buildFFI.sh
-    bash buildMetal.sh
-    ;;
   *)
-    echo "Uso: bash setup.sh [cpu|metal|all]"
-    exit 1
+    bash buildCPU.sh
+    bash buildMetal.sh
     ;;
 esac
 
