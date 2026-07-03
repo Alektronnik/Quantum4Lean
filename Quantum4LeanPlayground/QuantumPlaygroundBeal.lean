@@ -17,7 +17,7 @@ private def gcd3 (a b c : Int) : Int :=
   let absA := if a >= 0 then a else -a
   let absB := if b >= 0 then b else -b
   let absC := if c >= 0 then c else -c
-  (absA.gcd absB).gcd absC
+  ((absA.gcd absB).gcd absC.toNat : Int)
 
 /-- Genera reporte para una ecuacion Beal generica. --/
 private def caseReport (name : String) (aExp bExp cExp : Nat) (bitsA bitsB bitsC : Nat) : String :=

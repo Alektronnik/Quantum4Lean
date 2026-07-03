@@ -27,7 +27,7 @@ def testCubicExpansion (bits : Nat) (c : Int) : Bool :=
   let dim := 1 <<< bits
   -- Verificar cada estado base
   (List.range dim).all fun state =>
-    let x := state.toNat
+    let x := state
     let expected := (intToFloat (x*x*x - c))^2
     -- Inicializar state vector en |state>
     let svResult := StateVector.init bits
@@ -63,7 +63,7 @@ def testCubicStructure : String :=
   -- (no todos los terminos sobreviven a la simplificacion)
   s!"Test expandCubic (2 bits):\n" ++
   s!"  Terminos en H: {nTerms}\n" ++
-  s!"  Esperado > 0: {nTerms > 0}\n" ++
+  s!"  Esperado > 0: {if nTerms > 0 then "si" else "no"}\n" ++
   s!"  (verificar manualmente si la expansion es correcta)"
 
 /--

@@ -21,7 +21,7 @@ private def lcgNext (seed : Nat) : Nat :=
 
 private def randInt (seed : Nat) (max : Nat) : Int × Nat :=
   let s' := lcgNext seed
-  ((s' % max).toNat, s')
+  ((s' % max : Nat), s')
 
 def generateWithSolution (numVars : Nat) (maxBits : Nat) (seed : Nat)
     : PolyEquation × List Int × Nat :=
@@ -40,11 +40,11 @@ def generateWithSolution (numVars : Nat) (maxBits : Nat) (seed : Nat)
     (fun ((monoms, s) : List Monomial × Nat) _ =>
       let (coeffSign, s1') := randInt s 3
       let coeff := if coeffSign == 0 then 1 else if coeffSign == 1 then -1 else 2
-      let (numTerms, s2') := randInt s1' (numVars.toNat)
+      let (numTerms, s2') := randInt s1' numVars
       let numTerms' := if numTerms == 0 then 1 else numTerms.toNat
       let (exps, s3') := (List.range numTerms').foldl
         (fun ((es, si) : List (Nat × Nat) × Nat) _ =>
-          let (vi, si1) := randInt si (numVars.toNat)
+          let (vi, si1) := randInt si numVars
           let (exp, si2) := randInt si1 3
           let exp' := if exp == 0 then 1 else exp.toNat
           ((vi.toNat, exp') :: es, si2)
