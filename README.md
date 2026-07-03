@@ -2,7 +2,7 @@
 
 Computacion cuantica verificada en Lean 4. Motor puro-Lean bit-exacto. Stack NISQ completo: StateVector, Observables, VQE adaptativo, QAOA, Density Matrix + ruido, Jordan-Wigner. DSL declarativo, exportador OpenQASM 3.0, Hodge decomposition + topologia discreta, tactica `circuit_equiv` y fuzzer intra-Lean.
 
-Estado: v0.6.1 -- 23 modulos libreria, 7 playgrounds, 12 teoremas verificados, 208 tests fuzz.
+Estado: v0.7.0 -- 23 modulos libreria, 7 playgrounds, 12 teoremas verificados, 208 tests fuzz.
 
 ## Build
 
