@@ -150,15 +150,6 @@ private def tryHCNOTH (a b c : Gate n) : Option (Gate n) :=
     else none
   | _, _, _ => none
 
-/-- H(c)*CNOT(c,t)*H(c) = CZ(c,t) (CZ es simetrico) --/
-private def tryHCNOTHCtrl (a b c : Gate n) : Option (Gate n) :=
-  match a, b, c with
-  | .H qh1, .CNOT qc qt, .H qh2 =>
-    if qh1.idx.val == qc.idx.val && qh2.idx.val == qc.idx.val then
-      some (.CZ qc qt)
-    else none
-  | _, _, _ => none
-
 /-- CNOT(a,b)*CNOT(a,c) = CNOT(a,c)*CNOT(a,b) cuando b≠c (target commutation) --/
 private def tryCNOTTargetCommute (a b : Gate n) : Option (List (Gate n)) :=
   match a, b with
@@ -227,9 +218,6 @@ partial def simplifyPass (gates : List (Gate n)) : List (Gate n) :=
             | some g => simplifyPass (g :: rest')
             | none =>
             match tryHCNOTH a b c with
-            | some g => simplifyPass (g :: rest')
-            | none =>
-            match tryHCNOTHCtrl a b c with
             | some g => simplifyPass (g :: rest')
             | none =>
             match tryCNOTSwapDecomp a b c with

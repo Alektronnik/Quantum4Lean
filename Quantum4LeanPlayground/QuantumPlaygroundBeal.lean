@@ -34,9 +34,9 @@ private def caseReport (name : String) (aExp bExp cExp : Nat) (bitsA bitsB bitsC
   let dim := 1 <<< totalQubits
   let results := (List.range dim).filterMap fun state =>
     let vals := decodeState eq.varBits state
-    let a := vals.get\! 0
-    let b := vals.get\! 1
-    let c := vals.get\! 2
+    let a := vals.get! 0
+    let b := vals.get! 1
+    let c := vals.get! 2
     let af := intToFloat a; let bf := intToFloat b; let cf := intToFloat c
     let aPow := (List.range aExp).foldl (fun (acc : Float) _ => acc * af) 1.0
     let bPow := (List.range bExp).foldl (fun (acc : Float) _ => acc * bf) 1.0
@@ -45,14 +45,14 @@ private def caseReport (name : String) (aExp bExp cExp : Nat) (bitsA bitsB bitsC
     if diff.abs < 1e-6 then some (a, b, c, gcd3 a b c) else none
   let gcd1 := results.filter fun (_, _, _, g) => g == 1
   let gcdGt1 := results.filter fun (_, _, _, g) => g > 1
-  let desc := s\!"a^{aExp} + b^{bExp} = c^{cExp}"
-  s\!"[{name}] {desc} ({totalQubits} qubits)\n" ++
-  s\!"  Soluciones: {results.length} | gcd=1: {gcd1.length} | gcd>1: {gcdGt1.length}\n" ++
+  let desc := s!"a^{aExp} + b^{bExp} = c^{cExp}"
+  s!"[{name}] {desc} ({totalQubits} qubits)\n" ++
+  s!"  Soluciones: {results.length} | gcd=1: {gcd1.length} | gcd>1: {gcdGt1.length}\n" ++
   (if gcd1.isEmpty then "  Beal se mantiene.\n"
-   else "  CONTRAEJEMPLOS: " ++ String.intercalate " | " (gcd1.map fun (a,b,c,_) => s\!"({a},{b},{c})") ++ "\n") ++
+   else "  CONTRAEJEMPLOS: " ++ String.intercalate " | " (gcd1.map fun (a,b,c,_) => s!"({a},{b},{c})") ++ "\n") ++
   (if gcdGt1.length <= 5 then
-    "  Cumplen: " ++ String.intercalate " | " (gcdGt1.map fun (a,b,c,g) => s\!"({a},{b},{c}) g={g}") ++ "\n"
-   else s\!"  Cumplen: {gcdGt1.length} soluciones (primeras 5 mostradas)\n")
+    "  Cumplen: " ++ String.intercalate " | " (gcdGt1.map fun (a,b,c,g) => s!"({a},{b},{c}) g={g}") ++ "\n"
+   else s!"  Cumplen: {gcdGt1.length} soluciones (primeras 5 mostradas)\n")
 
 def smallCase  := caseReport "Beal 3+3=2" 3 3 2 4 4 5
 def mixedCase  := caseReport "Beal 3+2=3" 3 2 3 3 4 3

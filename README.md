@@ -8,7 +8,7 @@ Estado: v0.6.1 -- 15 modulos activos (+7 conservados), 7 playgrounds, 224 tests 
 
 ```bash
 cd Quantum4Lean
-lake build && ./build/bin/quantum4lean-test
+lake build quantum4lean-test && ./build/bin/quantum4lean-test
 ```
 
 Cero dependencias externas. Solo requiere Lean 4 (v4.7.0).
