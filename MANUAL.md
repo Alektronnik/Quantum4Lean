@@ -895,10 +895,10 @@ let rho := DensityMatrix.amplitudeDamping rho 0 0.05
 
 ---
 
-## 19. Puente FFI (Apple Silicon / Metal 3)
+## 19. Puente FFI (CPU + Metal)
 
-El puente FFI conecta Quantum4Lean con el motor C++/Metal 3 (CoreQU4TRIX)
-para simulaciones de hasta 30 qubits en hardware Apple Silicon.
+El puente FFI conecta Quantum4Lean con el motor C++ (CoreQU4TRIX)
+para simulaciones de hasta 30 qubits.
 
 ### Arquitectura
 
@@ -909,22 +909,23 @@ Lean 4 (Quantum4LeanFFI.lean)
 C (Quantum4LeanBridge.c)
   -> llama a qu4trix_* API
 C++ (QuantumKitCore.mm)
-  -> Motor Metal 3 en GPU Apple Silicon
+  -> Motor CPU (GCD) + GPU (Metal 3, opcional)
 ```
 
 ### Compilacion
 
 ```bash
-bash build_ffi.sh
-# Genera libQuantum4LeanFFI.a (30 KB)
+# Modo CPU (recomendado, enlaza con ld64.lld):
+bash build_cpu_ffi.sh && lake build quantum4lean-ffi
+
+# Modo Metal (requiere clang del sistema + frameworks Apple):
+bash build_ffi.sh && LEAN_CC=clang lake build quantum4lean-ffi
 ```
 
 ### Estado actual
 
-La libreria C++ compila correctamente. El enlace con el ejecutable Lean
-requiere que `ld64.lld` (linker bundled de Lean) soporte `-framework Metal`
-y `-framework Foundation`. El linker actual no lo soporta.
-Infraestructura lista para cuando Lake/Lean lo habilite.
+Modo CPU: compila, enlaza y ejecuta (50/50 build). Hasta 30 qubits.
+Modo Metal: compila, requiere `LEAN_CC=clang` para enlazar frameworks Apple.
 
 ---
 

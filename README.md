@@ -1,6 +1,6 @@
 # Quantum4Lean
 
-Computacion cuantica verificada en Lean 4. Motor puro-Lean bit-exacto. Stack NISQ completo: StateVector, Observables, VQE adaptativo, QAOA, Density Matrix + ruido, Jordan-Wigner. DSL declarativo, exportador OpenQASM 3.0, Hodge decomposition + topologia discreta, tactica `circuit_equiv` y fuzzer intra-Lean.
+Computacion cuantica verificada en Lean 4. Motor puro-Lean bit-exacto. Stack NISQ completo: StateVector, Observables, VQE adaptativo, QAOA, Density Matrix + ruido, Jordan-Wigner. DSL declarativo, exportador OpenQASM 3.0, Hodge decomposition + topologia discreta, tactica `circuit_equiv` y fuzzer intra-Lean. FFI CPU a motor C++ para hasta 30 qubits.
 
 Estado: v0.7.0 -- 23 modulos libreria, 7 playgrounds, 12 teoremas verificados, 208 tests fuzz.
 
