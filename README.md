@@ -2,7 +2,7 @@
 
 Computacion cuantica verificada en Lean 4. Motor puro-Lean bit-exacto con CoreQU4TRIX (C++/Metal). Stack NISQ completo: StateVector, Observables, VQE, QAOA. DSL declarativo, tactica `circuit_equiv` y fuzzer intra-Lean.
 
-Estado: v0.6.1 -- 15 modulos activos (+7 conservados), 7 playgrounds, 224 tests (208 fuzz + 16 teoremas).
+Estado: v0.6.1 -- 17 modulos libreria, 5 playgrounds, 224 tests (208 fuzz + 16 teoremas).
 
 ## Build
 
@@ -25,11 +25,9 @@ Cero dependencias externas. Solo requiere Lean 4 (v4.7.0).
     |       |       |       |
    DSL   Tactic   Simp  Transpile  Clifford
 
-Quantum4LeanPlayground/          -- Demostraciones (7 modulos)
-+-- QuantumPlaygroundDiophantine  -- Solver diofantino (4 casos)
-+-- QuantumPlaygroundFuzz         -- Fuzzer diofantino
-+-- QuantumPlaygroundBeal         -- Conjetura de Beal (3 escalas)
-+-- QuantumPlaygroundFFI          -- FFI Metal 3 (30 qubits)
+Quantum4LeanPlayground/          -- Demostraciones (5 modulos)
++-- QuantumPlaygroundDiophantine  -- Solver diofantino
++-- QuantumPlaygroundBeal         -- Conjetura de Beal
 +-- QuantumPlaygroundTijdeman     -- Tijdeman QAOA
 +-- QuantumPlaygroundRiemann      -- Riemann + Cuantica
 +-- QuantumPlaygroundTRDU         -- TRDU-Q
@@ -76,7 +74,8 @@ example : circuitsEquiv
 | Clifford | `cliffordEquiv`, `CliffordAmplitude`, `CliffordMatrix` |
 | Optimizacion | `simplifyCircuit`, `optimizeCircuit`, `verifyOptimization` |
 | DSL | `circuit\! { ... }`, `q[i]`, `H`, `X`, `CNOT`, ... (Shortcuts) |
-| Fuzzer | `FuzzConfig`, `FuzzReport`, `runFullSuite`, `reportToString` |
+| Fuzzer circuitos | `FuzzConfig`, `FuzzReport`, `runFullSuite` |
+| Fuzzer diofantino | `DiophantineFuzz.generateWithSolution`, `runFuzz`, `report` |
 | Diofantico | `Diophantine`, `toIsing`, `diophantineSolve`, `checkSolution` |
 | Polinomico | `Monomial`, `PolyEquation`, `polyToIsing`, `expandVarPower` |
 
@@ -190,20 +189,10 @@ Busqueda masiva de contraejemplos en 3 escalas (9, 12, 19 qubits):
 #eval Quantum4LeanPlayground.Beal.report
 ```
 
-### FFI Apple Silicon (QuantumPlaygroundFFI)
 
 Motor C++/Metal hasta 30 qubits. Requiere `bash build_ffi.sh`.
 
 ```lean
-#eval Quantum4LeanPlayground.FFI.report
-```
-
-### Fuzzer Diofantino (QuantumPlaygroundFuzz)
-
-Genera ecuaciones aleatorias con soluciones conocidas y verifica:
-
-```lean
-#eval Quantum4LeanPlayground.Fuzz.report
 ```
 
 ### ADAM Optimizer
@@ -265,9 +254,7 @@ Quantum4Lean/
 +-- Quantum4LeanPlayground.lean    -- Root del Playground
 +-- Quantum4LeanPlayground/
 |   +-- QuantumPlaygroundDiophantine.lean
-|   +-- QuantumPlaygroundFuzz.lean
 |   +-- QuantumPlaygroundBeal.lean
-|   +-- QuantumPlaygroundFFI.lean
 |   +-- QuantumPlaygroundTijdeman.lean
 |   +-- QuantumPlaygroundRiemann.lean
 |   +-- QuantumPlaygroundTRDU.lean

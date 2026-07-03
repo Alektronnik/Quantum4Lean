@@ -1,20 +1,16 @@
 /-
-QuantumPlaygroundFuzz.lean
+Quantum4LeanDiophantineFuzz.lean
 Fuzzer Diofantino: tests automaticos via polyToIsing.
 
 Genera ecuaciones aleatorias con soluciones conocidas y verifica
 que bruteForceSolve las encuentra.
-
-Dependencias: Quantum4Lean, QuantumPlaygroundCommon.
 -/
 
-import Quantum4Lean
-import Quantum4Lean
+import Quantum4Lean.Quantum4LeanSolver
 
 open Quantum4Lean
-open Quantum4Lean
 
-namespace Quantum4LeanPlayground.Fuzz
+namespace Quantum4Lean.DiophantineFuzz
 
 private def lcgNext (seed : Nat) : Nat :=
   seed * 6364136223846793005 + 1442695040888963407
@@ -107,4 +103,4 @@ def report : String :=
    else "Fallos:\n" ++ String.intercalate "\n" (failed.map fun r =>
      s!"  {r.testName}: esperado={r.solution}, encontrado={r.found.length} soluciones"))
 
-end Quantum4LeanPlayground.Fuzz
+end Quantum4Lean.DiophantineFuzz
