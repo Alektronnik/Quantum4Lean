@@ -99,50 +99,43 @@ def jwSingle (p : Nat) (op : FermionOp) : List PauliString :=
 
 /--
 Simplifica una lista de PauliTerms fusionando qubits repetidos.
-X*X = I, Y*Y = I, Z*Z = I, X*Y = iZ, etc.
-Devuelve ((re, im), terms) donde re+im*i es la fase global.
+X*X=I, Y*Y=I, Z*Z=I, X*Y=iZ, Y*X=-iZ, Y*Z=iX, Z*Y=-iX, Z*X=iY, X*Z=-iY.
+La fase i se absorbe en el signo del coeficiente (real).
+Devuelve (coeff, terms) donde coeff es el factor de signo (±1).
 -/
-private def simplifyTerms (ts : List PauliTerm) : (Float × Float) × List PauliTerm :=
+private def simplifyTerms (ts : List PauliTerm) : Float × List PauliTerm :=
+  -- Orden estable por qubit (< preserva orden original para mismo qubit)
   let rec insertSorted (t : PauliTerm) : List PauliTerm -> List PauliTerm
     | [] => [t]
     | h :: rest =>
-      if t.qubit <= h.qubit then t :: h :: rest
+      if t.qubit < h.qubit then t :: h :: rest
       else h :: insertSorted t rest
   let sorted := ts.foldl (fun acc t => insertSorted t acc) []
-  let rec go (re im : Float) (current : Option PauliTerm) : List PauliTerm -> (Float × Float) × List PauliTerm
+  let rec go (acc : Float) (current : Option PauliTerm) : List PauliTerm -> Float × List PauliTerm
     | [] =>
       match current with
-      | none => ((re, im), [])
-      | some t => ((re, im), [t])
+      | none => (acc, [])
+      | some t => (acc, [t])
     | t :: rest =>
       match current with
-      | none => go re im (some t) rest
+      | none => go acc (some t) rest
       | some cur =>
         if cur.qubit == t.qubit then
-          let phase := match cur.pauli with
-            | .I => (1.0, 0.0) | .X => (1.0, 0.0) | .Y => (0.0, 1.0) | .Z => (1.0, 0.0)
-          let phase2 := match t.pauli with
-            | .I => (1.0, 0.0) | .X => (1.0, 0.0) | .Y => (0.0, 1.0) | .Z => (1.0, 0.0)
-          -- Multiplicar fases: (a+bi)(c+di) = (ac-bd)+(ad+bc)i
-          let nr := re * phase.1 * phase2.1 - re * phase.2 * phase2.2 - im * phase.2 * phase2.1 - im * phase.1 * phase2.2
-          let ni := re * phase.2 * phase2.1 + re * phase.1 * phase2.2 + im * phase.1 * phase2.1 - im * phase.2 * phase2.2
-          let newPauli := match cur.pauli, t.pauli with
-            | .I, p => some p | p, .I => some p
-            | .X, .X => none | .Y, .Y => none | .Z, .Z => none
-            | .X, .Y => some .Z | .Y, .X => some .Z
-            | .Y, .Z => some .X | .Z, .Y => some .X
-            | .Z, .X => some .Y | .X, .Z => some .Y
-          match newPauli with
-          | none => go nr ni none rest
-          | some p => go nr ni (some { cur with pauli := p }) rest
+          match cur.pauli, t.pauli with
+          | .I, p => go acc (some { cur with pauli := p }) rest
+          | p, .I => go acc (some { cur with pauli := p }) rest
+          | .X, .X => go acc none rest           | .Y, .Y => go acc none rest           | .Z, .Z => go acc none rest
+          | .X, .Y => go acc (some { cur with pauli := .Z }) rest     -- XY = iZ
+          | .Y, .X => go (-acc) (some { cur with pauli := .Z }) rest  -- YX = -iZ
+          | .Y, .Z => go acc (some { cur with pauli := .X }) rest     -- YZ = iX
+          | .Z, .Y => go (-acc) (some { cur with pauli := .X }) rest  -- ZY = -iX
+          | .Z, .X => go acc (some { cur with pauli := .Y }) rest     -- ZX = iY
+          | .X, .Z => go (-acc) (some { cur with pauli := .Y }) rest  -- XZ = -iY
         else
-          -- Qubits diferentes: emitir cur, continuar con t
-          let ((re', im'), rest') := go re im (some t) rest
-          ((re', im'), cur :: rest')
-  let ((re, im), terms) := go 1.0 0.0 none sorted
-  -- Filtrar I terms (identidad en ese qubit)
-  -- Devolver solo parte real como fase (PauliString usa Float)
-  ((re, im), terms.filter fun t => t.pauli ≠ .I)
+          let (acc', rest') := go acc (some t) rest
+          (acc', cur :: rest')
+  let (coeff, terms) := go 1.0 none sorted
+  (coeff, terms.filter fun t => t.pauli ≠ .I)
 
 /--
 Multiplica dos PauliStrings (producto tensorial).
@@ -150,8 +143,8 @@ Combina terminos, simplifica productos en el mismo qubit.
 -/
 def pauliStringMul (a b : PauliString) : PauliString :=
   let combined := a.terms ++ b.terms
-  let ((coeffRe, _coeffIm), terms) := simplifyTerms combined
-  { coefficient := a.coefficient * b.coefficient * coeffRe
+  let (coeff, terms) := simplifyTerms combined
+  { coefficient := a.coefficient * b.coefficient * coeff
   , terms := terms }
 
 -- ===================================================================
