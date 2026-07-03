@@ -195,7 +195,7 @@ def volcanicFidelity (nQubits : Nat := 5) (steps : Nat := 5) (dt : Float := 0.5)
     (alpha : Float := 0.25) (order : Nat := 2) (nPrimes : Nat := 20) : Float :=
   let ps := primes nPrimes
   let d2g := delta2Gaps ps
-  let pve := PVE d2g
+  let _pve := PVE d2g
   let stepFn := if order = 2 then step2ndVolcanic else step1stVolcanic
   -- Construir circuito completo
   let forward := (List.range steps).foldl (fun (c : Circuit nQubits) _ =>
@@ -229,7 +229,7 @@ def report : String :=
   let nQubits := 5
   let ps := primes 20
   let d2g := delta2Gaps ps
-  let pve := PVE d2g
+  let _pve := PVE d2g
   let header := "RESONANCIA DE RIEMANN: Primos + Cuantica\n"
   let info := s!"Primos: {ps.length} generados\n"
   let info := info ++ s!"Δ²g (primeros 10): {d2g.take 10}\n"

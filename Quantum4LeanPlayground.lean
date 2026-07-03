@@ -18,5 +18,3 @@ import Quantum4LeanPlayground.QuantumPlaygroundTijdeman
 import Quantum4LeanPlayground.QuantumPlaygroundRiemann
 import Quantum4LeanPlayground.QuantumPlaygroundTRDU
 import Quantum4LeanPlayground.QuantumPlaygroundMobius
-import Quantum4LeanPlayground.QuantumPlaygroundRiemann
-import Quantum4LeanPlayground.QuantumPlaygroundTRDU

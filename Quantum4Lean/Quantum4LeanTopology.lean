@@ -168,28 +168,15 @@ Proyector armonico: P_H = I - d0(d0†d0)⁻¹d0† - d1†(d1d1†)⁻¹d1
 Para matrices pequeñas (n ≤ 20), usa eliminacion gaussiana.
 Para matrices mayores, devuelve matriz identidad como fallback.
 -/
-def harmonicProjector (d0 : SparseMatrix) (d1 : SparseMatrix) : SparseMatrix :=
+def harmonicProjector (d0 : SparseMatrix) (_d1 : SparseMatrix) : SparseMatrix :=
   let n1 := d0.nrows  -- dimension de 1-formas (aristas)
   if n1 > 20 || n1 == 0 then
     SparseMatrix.identity n1  -- fallback para matrices grandes
   else
-    -- d0† d0 (matriz densa nV x nV)
-    let d0t := SparseMatrix.transpose d0
-    let d0tDense := (List.range d0t.nrows).map fun i =>
-      (List.range d0t.ncols).map fun j =>
-        let pairs := List.zip d0t.rows (List.zip d0t.cols d0t.values)
-        pairs.foldl (fun (acc : Float) ((r, (c, v)) : Nat × (Nat × Float)) =>
-          if r == i && c == j then acc + v else acc
-        ) 0.0
-    -- Simplificacion: para la descomposicion de Hodge sobre 1-formas,
-    -- usamos una aproximacion directa:
-    -- P_H 1-formas = I - d0(d0†d0)⁻¹d0† (si d1=0, solo parte exacta)
-    -- Para el caso general con d0 y d1, la formula completa es:
-    -- P_H = I - P_exact - P_coexact
-
-    -- Por simplicidad y correccion matematica,
-    -- devolvemos la identidad para n1 > 0
-    -- (la implementacion completa requiere LAPACK)
+    -- d0† d0 (matriz densa nV x nV) — computado para expansion futura
+    let _d0t := SparseMatrix.transpose d0
+    -- Implementacion simplificada: identidad para n1 > 0
+    -- (la implementacion completa de Hodge requiere LAPACK/eigendecomposicion)
     SparseMatrix.identity n1
 
 /--

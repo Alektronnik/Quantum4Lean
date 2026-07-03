@@ -24,7 +24,7 @@ def CNOT     : Int := 6
 /-- Inicializa motor FFI con N qubits. Devuelve (token, estado). --/
 def ffiInit (n : Nat) : IO (USize × FloatArray) := do
   let memBytes <- quantum4LeanMemoryEstimate n
-  let mb := (memBytes.toNat.toFloat / 1048576.0)
+  let _mb := (memBytes.toNat.toFloat / 1048576.0)
   IO.println ("FFI: " ++ toString n ++ " qubits, memoria: " ++ toString memBytes ++ " bytes")
   let dim : Nat := 1 <<< n
   let arr : Array Float := Array.replicate (2 * dim) 0.0
