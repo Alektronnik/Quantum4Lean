@@ -723,7 +723,7 @@ import Quantum4LeanPlayground
 
 Motor generico que toma cualquier `PolyEquation`, construye el Hamiltoniano
 via `polyToIsing`, ejecuta busqueda exhaustiva (ground truth) y opcionalmente
-QAOA. Incluye 4 casos predefinidos:
+QAOA. Incluye 6 casos predefinidos con analisis Beal (gcd):
 
 | Caso | Ecuacion | Solucion esperada |
 |------|----------|-------------------|
@@ -731,6 +731,11 @@ QAOA. Incluye 4 casos predefinidos:
 | Pillai n=2 | $a^3 = b^2 + 2$ | $a=3, b=5$ |
 | Pillai n=3 | $a^3 = b^2 + 3$ | Ninguna (conjeturado) |
 | Pitagoras | $x^2 + y^2 = z^2$ | $x=3, y=4, z=5$ |
+| Beal cubico | $a^3 + b^3 = c^2$ | $(2,2,4), (1,2,3)$ |
+| Beal mixto | $a^3 + b^2 = c^3$ | Exploracion |
+
+Para soluciones exactas de 3 variables, el reporte incluye `gcd(a,b,c)`
+verificando la propiedad de la Conjetura de Beal (gcd > 1 requerido).
 
 ```lean
 import Quantum4LeanPlayground

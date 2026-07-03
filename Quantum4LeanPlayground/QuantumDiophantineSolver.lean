@@ -194,9 +194,67 @@ def pythagoreanCase : DiophantineCase := {
   description := "x^2 + y^2 = z^2. Terna pitagorica minima: 3^2 + 4^2 = 5^2."
 }
 
+-- ===================================================================
+-- Casos Beal
+-- ===================================================================
+
+/-- Calcula gcd de tres enteros. --/
+def gcd3 (a b c : Int) : Int :=
+  let absA := if a >= 0 then a else -a
+  let absB := if b >= 0 then b else -b
+  let absC := if c >= 0 then c else -c
+  let d := absA.gcd absB
+  d.gcd absC
+
+/-- Verifica la propiedad de Beal: si a^x + b^y = c^z entonces gcd(a,b,c) > 1. --/
+def bealProperty (a b c : Int) : Bool :=
+  let g := gcd3 a b c
+  g > 1
+
+/--
+Beal cubico-cuadratico: a^3 + b^3 = c^2.
+Soluciones conocidas:
+  (2,2,4): 8+8=16, gcd=2 -> cumple Beal
+  (1,2,3): 1+8=9, a=1 trivial
+-/
+def bealCubicCase : DiophantineCase := {
+  name := "Beal a^3 + b^3 = c^2"
+  equation := {
+    monomials := [
+      { coefficient := 1, exponents := [(0, 3)] },
+      { coefficient := 1, exponents := [(1, 3)] },
+      { coefficient := -1, exponents := [(2, 2)] }
+    ],
+    constant := 0,
+    varBits := [4, 4, 5]  -- a,b:0..15, c:0..31
+  }
+  expected := [[("a", 2), ("b", 2), ("c", 4)], [("a", 1), ("b", 2), ("c", 3)]]
+  description := "a^3 + b^3 = c^2. Conjetura de Beal: si gcd(a,b,c)=1 no hay soluciones con exp>2."
+}
+
+/--
+Beal con exponentes mixtos: a^3 + b^2 = c^3.
+Soluciones conocidas: (1,1,? no), (2,?,?). Exploracion.
+-/
+def bealMixedCase : DiophantineCase := {
+  name := "Beal a^3 + b^2 = c^3"
+  equation := {
+    monomials := [
+      { coefficient := 1, exponents := [(0, 3)] },
+      { coefficient := 1, exponents := [(1, 2)] },
+      { coefficient := -1, exponents := [(2, 3)] }
+    ],
+    constant := 0,
+    varBits := [3, 4, 3]  -- a,c:0..7, b:0..15
+  }
+  expected := []
+  description := "a^3 + b^2 = c^3. Busqueda de soluciones no triviales con exponentes > 2."
+}
+
 /-- Todos los casos. --/
 def allCases : List DiophantineCase :=
-  [tijdemanCase, pillaiCaseN2, pillaiCaseN3, pythagoreanCase]
+  [tijdemanCase, pillaiCaseN2, pillaiCaseN3, pythagoreanCase,
+   bealCubicCase, bealMixedCase]
 
 -- ===================================================================
 -- Reporte
@@ -208,7 +266,7 @@ def solveCase (c : DiophantineCase) : String :=
   let nVars := eq.varBits.length
   let varNames := match nVars with
     | 2 => ["x", "y"]
-    | 3 => ["x", "y", "z"]
+    | 3 => ["a", "b", "c"]
     | _ => List.range nVars |>.map fun i => s!"v{i}"
   let solutions := bruteForceSolve eq
   let foundStr := match solutions with
@@ -224,15 +282,25 @@ def solveCase (c : DiophantineCase) : String :=
       else
         let s := exact.map fun (vals, _) => formatSolution vals varNames
         s!"Soluciones exactas ({exact.length}): {String.intercalate " | " s}"
+  -- Analisis Beal para 3 variables
+  let bealStr := if nVars == 3 && solutions.any (fun (_, e) => e < 1e-6) then
+    let exactSols := solutions.filter fun (_, e) => e < 1e-6
+    let gcds := exactSols.map fun (vals, _) =>
+      let a := vals.get! 0
+      let b := vals.get! 1
+      let c := vals.get! 2
+      s!"gcd={gcd3 a b c}"
+    s!"  | Propiedad Beal: {String.intercalate "; " gcds} (Beal: gcd>1 requerido)"
+  else ""
   let expectedStr := match c.expected with
     | [] => "Ninguna esperada (conjeturado sin solucion)"
     | exps => String.intercalate " | " (exps.map fun exp =>
         let parts := exp.map fun (n, v) => s!"{n}={v}"
         s!"[{String.intercalate ", " parts}]")
   s!"[{c.name}] {c.description}
-  | Variables: {varNames.length}, Qubits: {PolyTotalQubits eq}
+  | Variables: {varNames.length}, Qubits: {polyTotalQubits eq}
   | Esperado: {expectedStr}
-  | Encontrado: {foundStr}"
+  | Encontrado: {foundStr}{bealStr}"
 
 /-- Reporte completo de todos los casos. --/
 def report : String :=
