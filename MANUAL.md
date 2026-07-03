@@ -772,7 +772,17 @@ import Quantum4LeanPlayground
 
 ### Beal (QuantumPlaygroundBeal)
 
-Busqueda masiva de contraejemplos en 3 escalas.
+5 casos de la Conjetura de Beal con busqueda exhaustiva:
+
+| Caso | Ecuacion | Qubits | Rango |
+|------|----------|--------|-------|
+| 3+3=2 | $a^3 + b^3 = c^2$ | 12 | a,b:0..15 |
+| 3+2=3 | $a^3 + b^2 = c^3$ | 9 | a,c:0..7 |
+| 2+3=3 | $a^2 + b^3 = c^3$ | 13 | a,c:0..15 |
+| 3+3=3 | $a^3 + b^3 = c^3$ | 12 | a,b,c:0..15 |
+| 3+3=2 L | $a^3 + b^3 = c^2$ | 19 | a,b:0..63 |
+
+Reporte incluye analisis gcd(a,b,c) para cada solucion exacta.
 
 ```lean
 #eval Quantum4LeanPlayground.Beal.report
