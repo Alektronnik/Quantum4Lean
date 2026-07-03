@@ -54,7 +54,7 @@ Si todas las puertas son soportadas, el circuito es ejecutable
 directamente en hardware cuantico real.
 -/
 def circuitToQASM {n : Nat} (c : Circuit n) (name : String := "circuit") : String :=
-  let header := s!"// OpenQASM 3.0 generado por Quantum4Lean v0.6.1\n// Circuito: {name}\n// {c.gates.length} puertas, {n} qubits\nOPENQASM 3.0;\ninclude \"stdgates.inc\";\nqubit[{n}] q;\n"
+  let header := s!"// OpenQASM 3.0 generado por Quantum4Lean v0.7.0\n// Circuito: {name}\n// {c.gates.length} puertas, {n} qubits\nOPENQASM 3.0;\ninclude \"stdgates.inc\";\nqubit[{n}] q;\n"
   let gateLines := c.gates.map fun g =>
     match gateToQASM g with
     | some line => s!"  {line}"

@@ -1,6 +1,6 @@
 # Quantum4Lean -- Manual de Usuario
 
-v0.6.1. Julio 2026.
+v0.7.0. Julio 2026.
 
 ## Indice
 
@@ -102,7 +102,7 @@ Salida esperada:
 FUZZ: 0 fallos
   ...
 
-TODOS LOS TESTS OK - Quantum4Lean v0.6.1
+TODOS LOS TESTS OK - Quantum4Lean v0.7.0
 ```
 
 ---

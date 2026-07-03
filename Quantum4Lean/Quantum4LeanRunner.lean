@@ -158,7 +158,7 @@ def main : IO UInt32 := do
   -- ================================================================
   IO.println "\n=============================================="
   if exitCode == 0 then
-    IO.println "TODOS LOS TESTS OK - Quantum4Lean v0.6.1"
+    IO.println "TODOS LOS TESTS OK - Quantum4Lean v0.7.0"
   else
     IO.println "HAY FALLOS - Revisar salida anterior"
   IO.println "=============================================="
