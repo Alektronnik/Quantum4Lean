@@ -18,6 +18,8 @@ Modulos activos:
   Quantum4LeanSolver      Utilidades compartidas
   Quantum4LeanVerify      Verificacion formal de circuitos
   Quantum4LeanQASM        Exportador OpenQASM 3.0
+  Quantum4LeanDensity     Density Matrix + ruido NISQ
+  Quantum4LeanChemistry   Jordan-Wigner + quimica cuantica
 -/
 
 import Quantum4Lean.Quantum4LeanCore
@@ -39,6 +41,7 @@ import Quantum4Lean.Quantum4LeanSolver
 import Quantum4Lean.Quantum4LeanVerify
 import Quantum4Lean.Quantum4LeanQASM
 import Quantum4Lean.Quantum4LeanDensity
+import Quantum4Lean.Quantum4LeanChemistry
 
 export Quantum4Lean (Qubit Gate Circuit StateVector
   executeSim executeSimProbs
@@ -56,6 +59,10 @@ export Quantum4Lean (Qubit Gate Circuit StateVector
   Monomial PolyEquation PolyResult
   expandVarPower expandMonomial polyToIsing polyTotalQubits
   intToFloat decodeState evalCost bruteForceSolve
-  generateWithSolution DiophantineFuzzResult runDiophantineFuzz diophantineFuzzReport)
+  generateWithSolution DiophantineFuzzResult runDiophantineFuzz diophantineFuzzReport
+  FermionOp FermionTerm FermionHamiltonianTerm FermionHamiltonian
+  jwSingle jwTermToObservable pauliStringMul
+  fermionToObservable h2Hamiltonian h2Observable
+  lihHamiltonian lihObservable)
 
 -- DSL y tacticas disponibles via `import Quantum4Lean` automaticamente
