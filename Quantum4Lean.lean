@@ -33,7 +33,6 @@ import Quantum4Lean.Quantum4LeanDSL
 import Quantum4Lean.Quantum4LeanTactic
 import Quantum4Lean.Quantum4LeanPolynomial
 import Quantum4Lean.Quantum4LeanSolver
-import Quantum4Lean.Quantum4LeanDiophantineFuzz
 
 export Quantum4Lean (Qubit Gate Circuit StateVector
   executeSim executeSimProbs
@@ -50,6 +49,7 @@ export Quantum4Lean (Qubit Gate Circuit StateVector
   toIsing diophantineSolve checkSolution decodeValues
   Monomial PolyEquation PolyResult
   expandVarPower expandMonomial polyToIsing polyTotalQubits
-  intToFloat decodeState evalCost bruteForceSolve)
+  intToFloat decodeState evalCost bruteForceSolve
+  generateWithSolution DiophantineFuzzResult runDiophantineFuzz diophantineFuzzReport)
 
 -- DSL y tacticas disponibles via `import Quantum4Lean` automaticamente
