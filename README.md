@@ -176,7 +176,7 @@ Motor externo con GPU acceleration via Metal 3. CPU: hasta 25 qubits (~1 GB). Me
 Requiere `../QuantumKit` (repositorio hermano con el motor C++). Configuracion:
 
 ```bash
-bash setup.sh          # clona QuantumKit si no existe + compila libs
+bash setup.sh          # verifica QuantumKit + compila libs
 # o paso a paso:
 bash buildCPU.sh       # libQuantum4LeanCPU.a
 bash buildMetal.sh     # libQuantum4LeanMetal.a
