@@ -20,6 +20,7 @@ Modulos activos:
   Quantum4LeanQASM        Exportador OpenQASM 3.0
   Quantum4LeanDensity     Density Matrix + ruido NISQ
   Quantum4LeanChemistry   Jordan-Wigner + quimica cuantica
+  Quantum4LeanTopology    Hodge decomposition + Betti + FirmaPrima
 -/
 
 import Quantum4Lean.Quantum4LeanCore
@@ -42,6 +43,7 @@ import Quantum4Lean.Quantum4LeanVerify
 import Quantum4Lean.Quantum4LeanQASM
 import Quantum4Lean.Quantum4LeanDensity
 import Quantum4Lean.Quantum4LeanChemistry
+import Quantum4Lean.Quantum4LeanTopology
 
 export Quantum4Lean (Qubit Gate Circuit StateVector
   executeSim executeSimProbs
@@ -64,6 +66,8 @@ export Quantum4Lean (Qubit Gate Circuit StateVector
   jwSingle jwTermToObservable pauliStringMul
   fermionToObservable h2Hamiltonian h2Observable
   lihHamiltonian lihObservable
-  mobiusTopologyObservable mobiusObservable)
+  mobiusTopologyObservable mobiusObservable
+  SparseMatrix bettiNumber harmonicProjector
+  FirmaPrima firmaPrima topologicalKappa)
 
 -- DSL y tacticas disponibles via `import Quantum4Lean` automaticamente
