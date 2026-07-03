@@ -1,6 +1,6 @@
 # Quantum4Lean -- Manual de Usuario
 
-v0.5.0. Julio 2026.
+v0.5.1. Julio 2026.
 
 ## Indice
 
@@ -715,26 +715,49 @@ Demostraciones avanzadas que extienden la libreria. Se importan por separado:
 ```lean
 import Quantum4LeanPlayground
 
+#eval Quantum4LeanPlayground.DiophantineSolver.report
 #eval Quantum4LeanPlayground.Tijdeman.report
 ```
 
-### Tijdeman Cuantico
+### Solver Diofantino Unificado
 
-Resuelve $x^2 = y^3 + 1$ via QAOA. Validacion cruzada contra la demostracion
-formal en Lean 4 (ABC_Formal_Enhanced.lean: 9/9 casos, p,q <= 4).
+Motor generico que toma cualquier `PolyEquation`, construye el Hamiltoniano
+via `polyToIsing`, ejecuta busqueda exhaustiva (ground truth) y opcionalmente
+QAOA. Incluye 4 casos predefinidos:
+
+| Caso | Ecuacion | Solucion esperada |
+|------|----------|-------------------|
+| Tijdeman | $x^2 = y^3 + 1$ | $x=3, y=2$ |
+| Pillai n=2 | $a^3 = b^2 + 2$ | $a=3, b=5$ |
+| Pillai n=3 | $a^3 = b^2 + 3$ | Ninguna (conjeturado) |
+| Pitagoras | $x^2 + y^2 = z^2$ | $x=3, y=4, z=5$ |
 
 ```lean
 import Quantum4LeanPlayground
 
--- Reporte completo
-#eval Quantum4LeanPlayground.Tijdeman.report
+-- Reporte completo de los 4 casos
+#eval Quantum4LeanPlayground.DiophantineSolver.report
 
--- Test: verifica que |00110010> (x=3, y=2) tiene energia 0
-#eval Quantum4LeanPlayground.Tijdeman.testExactSolution
+-- Resolver un caso especifico
+#eval Quantum4LeanPlayground.DiophantineSolver.solveCase
+  Quantum4LeanPlayground.DiophantineSolver.tijdemanCase
+
+-- Busqueda exhaustiva manual
+#eval Quantum4LeanPlayground.DiophantineSolver.bruteForceSolve
+  miPolyEquation
+
+-- QAOA (mas lento, solo Tijdeman)
+#eval Quantum4LeanPlayground.DiophantineSolver.reportQAOA
 ```
 
-Solucion esperada: $x=3$, $y=2$ ($3^2 = 9 = 2^3 + 1 = 8 + 1$).
-Representacion: 8 qubits (4 para x, 4 para y).
+### Tijdeman Cuantico
+
+Solucion dedicada de $x^2 = y^3 + 1$ via QAOA con ansatz optimizado.
+
+```lean
+#eval Quantum4LeanPlayground.Tijdeman.report
+#eval Quantum4LeanPlayground.Tijdeman.testExactSolution
+```
 
 ---
 
@@ -909,6 +932,7 @@ Quantum4Lean/
 |   +-- (8 modulos conservados)    -- FFI, Monad, Compile, Sim, etc.
 +-- Quantum4LeanPlayground.lean    -- Root del Playground
 +-- Quantum4LeanPlayground/
+|   +-- QuantumDiophantineSolver.lean -- Solver unificado
 |   +-- QuantumTijdeman.lean       -- Tijdeman cuantico
 |   +-- QuantumRiemann.lean        -- Resonancia de Riemann
 |   +-- QuantumTRDU.lean           -- TRDU-Q

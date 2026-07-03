@@ -2,7 +2,7 @@
 
 Computacion cuantica verificada en Lean 4. Motor puro-Lean bit-exacto con CoreQU4TRIX (C++/Metal). Stack NISQ completo: StateVector, Observables, VQE, QAOA. DSL declarativo, tactica `circuit_equiv` y fuzzer intra-Lean.
 
-Estado: v0.5.0 -- 17 modulos activos, build autocontenido, 224 tests (208 fuzz + 16 teoremas).
+Estado: v0.5.1 -- 18 modulos activos, build autocontenido, 224 tests (208 fuzz + 16 teoremas).
 
 ## Build
 
@@ -26,6 +26,7 @@ Cero dependencias externas. Solo requiere Lean 4 (v4.7.0).
    DSL   Tactic   Simp  Transpile  Clifford
 
 Quantum4LeanPlayground/          -- Demostraciones avanzadas
++-- QuantumDiophantineSolver.lean -- Solver unificado (Pentalogia)
 +-- QuantumTijdeman.lean          -- Tijdeman cuantico
 +-- QuantumRiemann.lean           -- Riemann + Cuantica
 +-- QuantumTRDU.lean              -- TRDU-Q
@@ -165,14 +166,27 @@ let n := polyTotalQubits eq -- 8 qubits
 
 ## Playground
 
-Demostraciones avanzadas que extienden la libreria. Import independiente:
+Demostraciones avanzadas que extienden la libreria. Import independiente.
+
+### Solver Diofantino Unificado
+
+4 casos predefinidos de la Pentalogia Diofantica con busqueda exhaustiva:
 
 ```lean
 import Quantum4LeanPlayground
 
+#eval Quantum4LeanPlayground.DiophantineSolver.report
+-- Tijdeman (x^2=y^3+1), Pillai n=2, Pillai n=3, Pitagoras (x^2+y^2=z^2)
+```
+
+Casos: Tijdeman (solucion 3,2), Pillai n=2 (solucion 3,5),
+Pillai n=3 (conjeturado sin solucion), Pitagoras (terna 3,4,5).
+
+### Tijdeman Cuantico
+
+```lean
 #eval Quantum4LeanPlayground.Tijdeman.report
--- Tijdeman cuantico: x^2 = y^3 + 1 via QAOA. Validado contra
--- demostracion formal (ABC_Formal_Enhanced.lean, 9/9 casos).
+-- x^2 = y^3 + 1 via QAOA. Validado contra demostracion formal.
 ```
 
 ## Fuzzer
@@ -219,6 +233,7 @@ Quantum4Lean/
 |   +-- (7 modulos conservados)
 +-- Quantum4LeanPlayground.lean    -- Root del Playground
 +-- Quantum4LeanPlayground/
+|   +-- QuantumDiophantineSolver.lean -- Solver unificado
 |   +-- QuantumTijdeman.lean       -- Tijdeman cuantico
 |   +-- QuantumRiemann.lean        -- Resonancia de Riemann
 |   +-- QuantumTRDU.lean           -- TRDU-Q
