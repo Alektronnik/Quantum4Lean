@@ -8,7 +8,7 @@ Demostraciones avanzadas de Quantum4Lean.
   QuantumPlaygroundRiemann      -- Resonancia de Riemann
   QuantumPlaygroundTRDU         -- Teoria de Resonancia Dimensional Unificada
   QuantumPlaygroundFFI          -- Puente Metal 3 (20-30 qubits)
-  QuantumPlaygroundChemistry    -- VQE molecular (H2, LiH)
+  QuantumPlaygroundMobius       -- Experimento Mobius C13Cl2 (IBM 2026)
 -/
 
 import Quantum4LeanPlayground.QuantumPlaygroundDiophantine
@@ -17,6 +17,6 @@ import Quantum4LeanPlayground.QuantumPlaygroundFFI
 import Quantum4LeanPlayground.QuantumPlaygroundTijdeman
 import Quantum4LeanPlayground.QuantumPlaygroundRiemann
 import Quantum4LeanPlayground.QuantumPlaygroundTRDU
-import Quantum4LeanPlayground.QuantumPlaygroundChemistry
+import Quantum4LeanPlayground.QuantumPlaygroundMobius
 import Quantum4LeanPlayground.QuantumPlaygroundRiemann
 import Quantum4LeanPlayground.QuantumPlaygroundTRDU
