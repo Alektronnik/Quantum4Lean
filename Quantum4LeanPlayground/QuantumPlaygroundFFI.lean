@@ -14,7 +14,7 @@ import Quantum4Lean.Quantum4LeanFFI
 open Quantum4Lean
 open Quantum4Lean.FFI
 
-namespace Quantum4LeanPlayground.BealFFI
+namespace Quantum4LeanPlayground.FFI
 
 -- Puertas
 def HADAMARD : Int := 0
@@ -85,4 +85,4 @@ def main : IO Unit := do
   let r <- report
   IO.println r
 
-end Quantum4LeanPlayground.BealFFI
+end Quantum4LeanPlayground.FFI
