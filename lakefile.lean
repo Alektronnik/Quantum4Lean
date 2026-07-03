@@ -28,3 +28,12 @@ Ejecutable de validacion: tests unitarios + fuzzer.
 -/
 lean_exe «quantum4lean-test» where
   root := `Quantum4Lean.Quantum4LeanRunner
+
+/--
+Ejecutable FFI: Beal a 20-30 qubits via Apple Silicon / Metal 3.
+Requisito: compilar libQuantum4LeanFFI.a primero.
+  bash build_ffi.sh && lake build quantum4lean-ffi
+-/
+lean_exe «quantum4lean-ffi» where
+  root := `Quantum4LeanPlayground.QuantumBealFFI
+  moreLinkArgs := #["-L.", "-lQuantum4LeanFFI", "-framework", "Metal", "-framework", "Foundation"]
