@@ -15,6 +15,8 @@ COMPATIBLE: Lean 4.7.0, build autocontenido.
 
 import Quantum4Lean.Quantum4LeanCore
 import Quantum4Lean.Quantum4LeanEngine
+import Quantum4Lean.Quantum4LeanSimp
+import Quantum4Lean.Quantum4LeanUnitary
 
 namespace Quantum4Lean
 
@@ -306,6 +308,33 @@ structure FuzzReport where
   allOk          : Bool
   deriving Repr
 
+-- ===================================================================
+-- Fuzzer del simplificador: simplify(c) ≡ c (semanticamente)
+-- ===================================================================
+
+/--
+Verifica que simplifyCircuit no rompa equivalencia semantica.
+Prueba patrones conocidos de simplificacion.
+-/
+def testSimplifier : List String :=
+  let n := 2
+  let h0 : 0 < n := by decide
+  let h1 : 1 < n := by decide
+  let q0 := mkQubit n 0 h0; let q1 := mkQubit n 1 h1
+  -- Circuitos de prueba: cada par debe ser semanticamente equivalente
+  let tests : List (String × Circuit 2 × Circuit 2) := [
+    ("H*H=I", { gates := [Gate.H q0, Gate.H q0] }, Circuit.identity 2),
+    ("X*X=I", { gates := [Gate.X q0, Gate.X q0] }, Circuit.identity 2),
+    ("S*S=Z", { gates := [Gate.S q0, Gate.S q0] }, { gates := [Gate.Z q0] }),
+    ("T*T=S", { gates := [Gate.T q0, Gate.T q0] }, { gates := [Gate.S q0] }),
+    ("CNOT*CNOT=I", { gates := [Gate.CNOT q0 q1, Gate.CNOT q0 q1] }, Circuit.identity 2)
+  ]
+  listBind tests fun (name, c1, c2) =>
+    let s1 := simplifyCircuit c1
+    let s2 := simplifyCircuit c2
+    if circuitsEquiv s1 s2 then []
+    else [s!"simplify {name}: inequivalentes"]
+
 def runFullSuite (cfg : FuzzConfig := {}) : FuzzReport :=
   let gateId := testGateIdentities
   let swapId := testSWAPIdentity
@@ -313,7 +342,8 @@ def runFullSuite (cfg : FuzzConfig := {}) : FuzzReport :=
   let bell := testBellState
   let ghz := testGHZState
   let rand := fuzzRandomCircuits cfg
-  let total := gateId.length + swapId.length + pauli.length + bell.length + ghz.length + rand.length
+  let simp := testSimplifier
+  let total := gateId.length + swapId.length + pauli.length + bell.length + ghz.length + rand.length + simp.length
   { gateIdentities := gateId
   , swapIdentity   := swapId
   , pauliAlgebra   := pauli
@@ -335,6 +365,7 @@ def reportToString (r : FuzzReport) : String :=
     formatSection "Pauli" r.pauliAlgebra ++
     formatSection "Bell" r.bellState ++
     formatSection "GHZ" r.ghzState ++
+    formatSection "Simplifier" (testSimplifier) ++
     formatSection "Aleatorios" r.randomCircuits
   String.intercalate "\n" (header :: parts)
 
