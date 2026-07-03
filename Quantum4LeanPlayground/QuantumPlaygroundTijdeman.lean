@@ -104,12 +104,12 @@ def solveTijdeman (lr : Float := 0.05) (iters : Nat := 200)
   let initialParams :=
     if p == 1 then [0.3, 0.7]   -- heuristico para Tijdeman
     else List.replicate nParams 0.1
-  let (energy, _, _) := vqe ansatz H initialParams lr iters
-  -- Ejecutar circuito optimo y decodificar
+  let (energy, optParams, _) := vqe ansatz H initialParams lr iters
+  -- Ejecutar circuito con parametros optimizados y decodificar
   let svResult := StateVector.init totalQubits
   match svResult with
   | Except.ok sv =>
-    let svFinal := StateVector.runCircuit sv (ansatz initialParams)
+    let svFinal := StateVector.runCircuit sv (ansatz optParams)
     let (x, y) := decodeTijdeman svFinal
     { values := [("x", x), ("y", y)]
     , energy := energy

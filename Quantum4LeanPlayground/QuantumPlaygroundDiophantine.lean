@@ -39,7 +39,7 @@ def verifySolution (eq : PolyEquation) (vals : List Int) : Bool :=
   evalCost eq vals < 1e-6
 
 def formatSolution (vals : List Int) (names : List String) : String :=
-  let parts := List.zip names vals |>.map fun (n, v) => s\!"{n}={v}"
+  let parts := List.zip names vals |>.map fun (n, v) => s!"{n}={v}"
   String.intercalate ", " parts
 
 def tijdemanCase : DiophantineCase := {
@@ -108,27 +108,27 @@ def solveCase (c : DiophantineCase) : String :=
   let varNames := match nVars with
     | 2 => ["x", "y"]
     | 3 => ["x", "y", "z"]
-    | _ => List.range nVars |>.map fun i => s\!"v{i}"
+    | _ => List.range nVars |>.map fun i => s!"v{i}"
   let solutions := bruteForceSolve eq
   let foundStr := match solutions with
     | [] => "NINGUNA"
     | [(vals, e)] =>
-      if e < 1e-6 then s\!"{formatSolution vals varNames} (exacta)"
-      else s\!"Minimo: {formatSolution vals varNames} (energia={e})"
+      if e < 1e-6 then s!"{formatSolution vals varNames} (exacta)"
+      else s!"Minimo: {formatSolution vals varNames} (energia={e})"
     | sols =>
       let exact := sols.filter fun (_, e) => e < 1e-6
       if exact.isEmpty then
-        let best := sols.head\!
-        s\!"Minimo: {formatSolution best.1 varNames} (e={best.2}, {sols.length} degenerados)"
+        let best := sols.head!
+        s!"Minimo: {formatSolution best.1 varNames} (e={best.2}, {sols.length} degenerados)"
       else
         let s := exact.map fun (vals, _) => formatSolution vals varNames
-        s\!"Exactas ({exact.length}): {String.intercalate " | " s}"
+        s!"Exactas ({exact.length}): {String.intercalate " | " s}"
   let expectedStr := match c.expected with
     | [] => "Ninguna"
     | exps => String.intercalate " | " (exps.map fun exp =>
-        let parts := exp.map fun (n, v) => s\!"{n}={v}"
-        s\!"[{String.intercalate ", " parts}]")
-  s\!"[{c.name}] {c.description}
+        let parts := exp.map fun (n, v) => s!"{n}={v}"
+        s!"[{String.intercalate ", " parts}]")
+  s!"[{c.name}] {c.description}
   | Qubits: {polyTotalQubits eq}
   | Esperado: {expectedStr}
   | Resultado: {foundStr}"
@@ -144,6 +144,6 @@ def reportQAOA : IO String := do
   let best := match solutions.head? with
     | some (vals, _) => formatSolution vals ["x", "y"]
     | none => "(sin solucion)"
-  return s\!"QAOA Tijdeman: energia={energy}, mejor={best}, soluciones={solutions.length}"
+  return s!"QAOA Tijdeman: energia={energy}, mejor={best}, soluciones={solutions.length}"
 
 end Quantum4LeanPlayground.Diophantine

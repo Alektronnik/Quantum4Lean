@@ -82,13 +82,14 @@ def toIsing (eq : Diophantine) (bitsPerVar : Nat := 4) : Observable :=
   { strings := linear ++ diagonal ++ crossed }
 
 def diophantineSolve (eq : Diophantine) (bitsPerVar : Nat := 4)
-    (jCoupling : Float := 1.0) (hField : Float := 0.5)
-    (p : Nat := 1) (lr : Float := 0.05) (iters : Nat := 100) : DiophantineResult :=
+    (p : Nat := 1) (lr : Float := 0.05) (iters : Nat := 200) : DiophantineResult :=
   let n := eq.vars.length * bitsPerVar
-  -- QAOA optimiza el Hamiltoniano Ising 1D; el Observable diofantino (toIsing)
-  -- puede acoplarse via VQE con ansatz personalizado en version futura.
-  let _H := toIsing eq bitsPerVar
-  let (energy, _, _) := qaoaIsing n p jCoupling hField lr iters
+  let H := toIsing eq bitsPerVar
+  -- VQE con el Observable diofantino real (no Ising generico)
+  let ansatz (params : List Float) : Circuit n :=
+    (qaoaIsingCircuit n p 1.0 0.5) params
+  let initialParams := List.replicate (2 * p) 0.1
+  let (energy, _, _) := vqe ansatz H initialParams lr iters
   { values := eq.vars.map fun v => (v.name, 0)
   , energy := energy
   , satisfied := false

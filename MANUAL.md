@@ -72,7 +72,7 @@ export PATH="$HOME/.elan/bin:$PATH"
 ```bash
 git clone https://github.com/TU_USUARIO/Quantum4Lean.git
 cd Quantum4Lean
-lake build
+lake build quantum4lean-test
 ```
 
 Cero dependencias externas. Sin mathlib4, sin binarios C++.
@@ -93,7 +93,7 @@ Salida esperada:
 FUZZ: 0 fallos
   ...
 
-TODOS LOS TESTS OK - Quantum4Lean v0.4.0
+TODOS LOS TESTS OK - Quantum4Lean v0.6.1
 ```
 
 ---

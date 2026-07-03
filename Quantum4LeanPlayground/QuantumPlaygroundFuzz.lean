@@ -53,7 +53,7 @@ def generateWithSolution (numVars : Nat) (maxBits : Nat) (seed : Nat)
     ) ([], s2)
   let polyVal := ms.foldl (fun (acc : Int) (m : Monomial) =>
     let prod := m.exponents.foldl (fun (p : Int) ((vi, e) : Nat × Nat) =>
-      let sv := solution.get\! vi
+      let sv := solution.get! vi
       let vp := (List.range e).foldl (fun (pv : Int) _ => pv * sv) 1
       p * vp
     ) 1
@@ -77,7 +77,7 @@ def runSingleTest (testName : String) (eq : PolyEquation) (expected : List Int)
   let foundExpected := exact.any fun (vals, _) =>
     vals.length == expected.length &&
     (List.range vals.length).all fun i =>
-      vals.get\! i == expected.get\! i
+      vals.get! i == expected.get! i
   { testName := testName
   , passed := foundExpected
   , equation := eq
@@ -89,7 +89,7 @@ def runFuzz (numTests : Nat := 50) (maxVars : Nat := 3) (maxBits : Nat := 4)
     (baseSeed : Nat := 42) : List FuzzResult :=
   let (results, _) := (List.range numTests).foldl
     (fun ((rs : List FuzzResult), (s : Nat)) (i : Nat) =>
-      let name := s\!"test_{i}"
+      let name := s!"test_{i}"
       let (eq, sol, s') := generateWithSolution maxVars maxBits s
       let result := runSingleTest name eq sol
       (rs ++ [result], s')
@@ -99,12 +99,12 @@ def runFuzz (numTests : Nat := 50) (maxVars : Nat := 3) (maxBits : Nat := 4)
 def report : String :=
   let results := runFuzz 50
   let passed := results.filter fun r => r.passed
-  let failed := results.filter fun r => \!r.passed
-  s\!"Fuzzer Diofantino\n" ++
-  s\!"=================\n" ++
-  s\!"Tests: {results.length} | Pasados: {passed.length} | Fallados: {failed.length}\n\n" ++
+  let failed := results.filter fun r => !r.passed
+  s!"Fuzzer Diofantino\n" ++
+  s!"=================\n" ++
+  s!"Tests: {results.length} | Pasados: {passed.length} | Fallados: {failed.length}\n\n" ++
   (if failed.isEmpty then "Todos los tests pasaron.\n"
    else "Fallos:\n" ++ String.intercalate "\n" (failed.map fun r =>
-     s\!"  {r.testName}: esperado={r.solution}, encontrado={r.found.length} soluciones"))
+     s!"  {r.testName}: esperado={r.solution}, encontrado={r.found.length} soluciones"))
 
 end Quantum4LeanPlayground.Fuzz
