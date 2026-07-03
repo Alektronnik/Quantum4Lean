@@ -35,5 +35,5 @@ Requisito: compilar libQuantum4LeanFFI.a primero.
   bash build_ffi.sh && lake build quantum4lean-ffi
 -/
 lean_exe «quantum4lean-ffi» where
-  root := `Quantum4LeanPlayground.QuantumBealFFI
+  root := `Quantum4LeanPlayground.QuantumPlaygroundFFI
   moreLinkArgs := #["-L.", "-lQuantum4LeanFFI", "-framework", "Metal", "-framework", "Foundation"]

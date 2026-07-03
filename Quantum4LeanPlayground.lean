@@ -1,25 +1,25 @@
 /-
 Quantum4LeanPlayground.lean
-Demostraciones avanzadas de Quantum4Lean. Estilo Apple Playgrounds.
+Demostraciones avanzadas de Quantum4Lean. Todas con prefijo QuantumPlayground.
 
-  QuantumDiophantineSolver  -- Solver unificado: Pentalogia (6 casos)
-  QuantumBealLargeScale     -- Beal a 19 qubits: busqueda de contraejemplos
-  QuantumBealFFI            -- Beal FFI: 20-30 qubits via Apple Silicon/Metal 3
-  QuantumTijdeman           -- Tijdeman cuantico: x^2 = y^3 + 1 via QAOA
-  QuantumRiemann            -- Resonancia de Riemann: Primos + Cuantica
-  QuantumTRDU               -- Teoria de Resonancia Dimensional Unificada
+  QuantumPlaygroundDiophantine  -- Solver diofantino (4 casos)
+  QuantumPlaygroundBeal         -- Conjetura de Beal (3 escalas)
+  QuantumPlaygroundFFI          -- FFI: 20-30 qubits via Apple Silicon/Metal 3
+  QuantumPlaygroundTijdeman     -- Tijdeman cuantico: x^2 = y^3 + 1
+  QuantumPlaygroundRiemann      -- Resonancia de Riemann
+  QuantumPlaygroundTRDU         -- Teoria de Resonancia Dimensional Unificada
 
 Uso:
-  #eval Quantum4LeanPlayground.DiophantineSolver.report
-  #eval Quantum4LeanPlayground.BealLargeScale.report
+  #eval Quantum4LeanPlayground.Diophantine.report
+  #eval Quantum4LeanPlayground.Beal.report
   #eval Quantum4LeanPlayground.Tijdeman.report
   #eval Quantum4LeanPlayground.Riemann.report
   #eval Quantum4LeanPlayground.TRDU.report
 -/
 
-import Quantum4LeanPlayground.QuantumBealLargeScale
-import Quantum4LeanPlayground.QuantumDiophantineSolver
-import Quantum4LeanPlayground.QuantumBealFFI
-import Quantum4LeanPlayground.QuantumTijdeman
-import Quantum4LeanPlayground.QuantumRiemann
-import Quantum4LeanPlayground.QuantumTRDU
+import Quantum4LeanPlayground.QuantumPlaygroundDiophantine
+import Quantum4LeanPlayground.QuantumPlaygroundBeal
+import Quantum4LeanPlayground.QuantumPlaygroundFFI
+import Quantum4LeanPlayground.QuantumPlaygroundTijdeman
+import Quantum4LeanPlayground.QuantumPlaygroundRiemann
+import Quantum4LeanPlayground.QuantumPlaygroundTRDU
