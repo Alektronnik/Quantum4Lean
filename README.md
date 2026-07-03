@@ -27,7 +27,7 @@ Quantum4LeanPlayground (7 demos)
 
 Quantum4LeanBridge (puente C)
   Quantum4LeanFFI.c/.h  -- API C estable para FFI
-build_*.sh              -- Scripts de compilacion CPU/Metal
+buildCPU.sh buildFFI.sh buildMetal.sh  -- Scripts de compilacion CPU/FFI/Metal
 ```
 
 ## Uso rapido
@@ -175,11 +175,11 @@ Dos variantes: CPU-only (sin dependencias Metal) y Metal GPU (Apple Silicon).
 
 ```bash
 # CPU-only
-bash build_cpu_ffi.sh && lake build quantum4lean-ffi
+bash buildCPU.sh && lake build quantum4lean-ffi
 .lake/build/bin/quantum4lean-ffi
 
 # Metal GPU (requiere LEAN_CC=clang)
-bash build_metal_ffi.sh && LEAN_CC=clang lake build quantum4lean-ffi-metal
+bash buildMetal.sh && LEAN_CC=clang lake build quantum4lean-ffi-metal
 .lake/build/bin/quantum4lean-ffi-metal
 ```
 

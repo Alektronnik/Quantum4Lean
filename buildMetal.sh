@@ -1,5 +1,5 @@
 #!/bin/bash
-# build_metal_ffi.sh
+# buildMetal.sh
 # Compila el motor C++ con Metal GPU (Apple Silicon) + puente C para FFI.
 # El motor usa compilacion JIT de Metal shaders (embebidos en el codigo).
 # NO requiere .metal externo. NO requiere metallib precompilado.
@@ -8,7 +8,7 @@
 # Salida: libQuantum4LeanMetal.a en la raiz del proyecto.
 #
 # Uso:
-#   bash build_metal_ffi.sh && LEAN_CC=clang lake build quantum4lean-ffi-metal
+#   bash buildMetal.sh && LEAN_CC=clang lake build quantum4lean-ffi-metal
 #   .lake/build/bin/quantum4lean-ffi-metal
 
 set -e
@@ -46,7 +46,7 @@ ls -lh "$OUTPUT"
 
 echo ""
 echo "Para compilar y ejecutar Quantum4Lean con FFI (Metal GPU):"
-echo "  LEAN_CC=clang lake build quantum4lean-ffi-metal"
+echo "  bash buildMetal.sh && LEAN_CC=clang lake build quantum4lean-ffi-metal"
 echo "  .lake/build/bin/quantum4lean-ffi-metal"
 echo ""
 echo "NOTA: Requiere LEAN_CC=clang porque el linker ld64.lld de Lean"
