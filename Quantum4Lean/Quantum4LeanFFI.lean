@@ -1,74 +1,40 @@
 /-
 Quantum4LeanFFI.lean
-Interfaz de Funciones Foraneas (FFI) -- Bindings directos a Quantum4LeanBridge.c
+FFI a Quantum4LeanBridge.c via FloatArray (Lean 4.7.0 compatible).
 
-Las declaraciones @[extern] mapean 1:1 con las firmas C de Quantum4LeanBridge.h.
-Tipos Lean -> C:
-  USize   -> uint64_t (token, semilla)
-  Float   -> double   (amplitudes, parametros)
-  Int     -> int      (codigos de error, indices)
-  Ptr Float -> double* (state vector, buffers)
+El motor C++ opera in-place sobre FloatArray (double*).
+La memoria se gestiona desde Lean.
 -/
 
 import Lean
 
 namespace Quantum4Lean.FFI
 
--- --- Codigos de error ------------------------------------------
+def errorOK : Int := 0
 
-def errorOK               : Int := 0
-def errorNoInit           : Int := 201
-def errorQubitRange       : Int := 202
-def errorQubitsMax        : Int := 203
-def errorNullPointer      : Int := 205
-def errorTokenMismatch    : Int := 207
-def errorMemoria          : Int := 208
-
--- --- Ciclo de vida ---------------------------------------------
-
+/-- Inicializa motor: devuelve token (0 = error). --/
 @[extern "Quantum4LeanInit"]
-opaque quantum4LeanInit (numQubits : Int) (estadoInicial : Ptr Float)
-                         (semilla : USize) (tokenOut : Ptr USize) : IO Int
+opaque quantum4LeanInit (numQubits : Int) (estado : FloatArray) (semilla : USize) : IO USize
 
+/-- Finaliza motor. --/
 @[extern "Quantum4LeanFinalize"]
 opaque quantum4LeanFinalize (token : USize) : IO Int
 
+/-- Memoria estimada para N qubits (bytes). --/
 @[extern "Quantum4LeanMemoryEstimate"]
 opaque quantum4LeanMemoryEstimate (numQubits : Int) : IO USize
 
--- --- Puertas ---------------------------------------------------
-
+/-- Aplica puerta in-place sobre estado. --/
 @[extern "Quantum4LeanApplyGate"]
 opaque quantum4LeanApplyGate (token : USize) (tipo : Int) (qA qB : Int)
-                              (parametro : Float) (estadoIO : Ptr Float) : IO Int
+                              (parametro : Float) (estado : FloatArray) : IO Int
 
-@[extern "Quantum4LeanApplyUnitary"]
-opaque quantum4LeanApplyUnitary (token : USize) (q : Int)
-                                 (matriz : Ptr Float) (estadoIO : Ptr Float) : IO Int
-
--- --- Medicion --------------------------------------------------
-
+/-- Mide qubit k. Devuelve bit (0 o 1). Estado colapsado in-place. --/
 @[extern "Quantum4LeanMeasure"]
-opaque quantum4LeanMeasure (token : USize) (qubitK : Int)
-                            (estadoIO : Ptr Float) (bitOut : Ptr Int) : IO Int
+opaque quantum4LeanMeasure (token : USize) (qubitK : Int) (estado : FloatArray) : IO Int
 
--- --- Probabilidades --------------------------------------------
-
+/-- Calcula probabilidades (requiere pre-alocar probs de tamano 2^N). --/
 @[extern "Quantum4LeanProbabilities"]
-opaque quantum4LeanProbabilities (token : USize) (estado : Ptr Float)
-                                  (probsOut : Ptr Float) : IO Int
-
--- --- Telemetria ------------------------------------------------
-
-@[extern "Quantum4LeanTelemetry"]
-opaque quantum4LeanTelemetry (token : USize) (nOut dimOut cyclesOut : Ptr Int) : IO Int
-
--- --- Utilidades de memoria -------------------------------------
-
-@[extern "Quantum4LeanAllocState"]
-opaque quantum4LeanAllocState (numQubits : Int) : IO (Ptr Float)
-
-@[extern "Quantum4LeanFreeState"]
-opaque quantum4LeanFreeState (estado : Ptr Float) : IO Unit
+opaque quantum4LeanProbabilities (token : USize) (estado : FloatArray) (probs : FloatArray) : IO Int
 
 end Quantum4Lean.FFI
