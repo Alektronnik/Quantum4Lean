@@ -1,11 +1,11 @@
 /-
-QuantumBealFFI.lean
+QuantumPlaygroundFFI.lean
 Playground: Beal a 20-30 qubits via FFI (Apple Silicon / Metal 3).
 
 Pipeline: polyToIsing -> FFI Engine (C++/Metal, hasta 30q) -> Medicion.
 
 Requisito: libQuantum4LeanFFI.a compilada.
-  bash build_ffi.sh && lake build quantum4lean-ffi
+  bash build_ffi.sh
 -/
 
 import Quantum4Lean

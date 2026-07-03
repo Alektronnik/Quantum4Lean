@@ -7,9 +7,7 @@ Dependencias: Quantum4Lean, QuantumPlaygroundCommon.
 -/
 
 import Quantum4Lean
-import Quantum4Lean
 
-open Quantum4Lean
 open Quantum4Lean
 
 namespace Quantum4LeanPlayground.Diophantine
@@ -116,17 +114,18 @@ def solveCase (c : DiophantineCase) : String :=
       if e < 1e-6 then s!"{formatSolution vals varNames} (exacta)"
       else s!"Minimo: {formatSolution vals varNames} (energia={e})"
     | sols =>
-      let exact := sols.filter fun (_, e) => e < 1e-6
+      let exact := sols.filter fun (p : List Int × Float) => p.2 < 1e-6
       if exact.isEmpty then
         let best := sols.head!
         s!"Minimo: {formatSolution best.1 varNames} (e={best.2}, {sols.length} degenerados)"
       else
-        let s := exact.map fun (vals, _) => formatSolution vals varNames
+        let s := exact.map fun (p : List Int × Float) => formatSolution p.1 varNames
         s!"Exactas ({exact.length}): {String.intercalate " | " s}"
   let expectedStr := match c.expected with
     | [] => "Ninguna"
     | exps => String.intercalate " | " (exps.map fun exp =>
-        let parts := exp.map fun (n, v) => s!"{n}={v}"
+        let expTyped : List (String × Int) := exp
+        let parts := expTyped.map fun (p : String × Int) => s!"{p.1}={p.2}"
         s!"[{String.intercalate ", " parts}]")
   s!"[{c.name}] {c.description}
   | Qubits: {polyTotalQubits eq}

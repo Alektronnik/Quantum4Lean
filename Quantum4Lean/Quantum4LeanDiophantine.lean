@@ -81,7 +81,73 @@ def toIsing (eq : Diophantine) (bitsPerVar : Nat := 4) : Observable :=
             PauliString.mk (aik * pow2 (j + l) / 2.0) [PauliTerm.mk .Z (qIdx i j), PauliTerm.mk .Z (qIdx k l)]
   { strings := linear ++ diagonal ++ crossed }
 
-def diophantineSolve (eq : Diophantine) (bitsPerVar : Nat := 4)
+def diophantineCost (eq : Diophantine) (vals : List Int) : Float :=
+  let sum := (List.zip eq.vars vals).foldl (fun (acc : Int) ((v, val) : DiophantineVar × Int) =>
+    acc + v.coeff * val
+  ) 0
+  let diff : Int := sum - eq.constant
+  let df : Float := if diff >= 0 then diff.toNat.toFloat else -(((-diff).toNat.toFloat))
+  df * df
+
+/--
+Busqueda exhaustiva sobre el espacio de variables diofantinas.
+Coste: O(2^(nVars * bitsPerVar)).
+-/
+def diophantineBruteForce (eq : Diophantine) (tolerance : Float := 1e-6)
+    : List (List (String × Int) × Float) :=
+  let totalBits := eq.vars.foldl (fun acc v => acc + v.bits) 0
+  let dim := 1 <<< totalBits
+  let offsets : List Nat :=
+    let rec offsetGo (acc : Nat) : List DiophantineVar -> List Nat
+      | [] => []
+      | v :: vs => acc :: offsetGo (acc + v.bits) vs
+    offsetGo 0 eq.vars
+  let decodeOne (state : Nat) (i : Nat) (v : DiophantineVar) : (String × Int) :=
+    let start := offsets.get! i
+    let val : Int := (List.range v.bits).foldl (fun (acc : Int) (j : Nat) =>
+      if ((state >>> (start + j)) &&& 1) == 1 then acc + ((1 <<< j : Nat) : Int) else acc
+    ) 0
+    (v.name, val)
+  let decodeAll (state : Nat) : List (String × Int) :=
+    let rec decodeGo (i : Nat) : List DiophantineVar -> List (String × Int)
+      | [] => []
+      | v :: vs => decodeOne state i v :: decodeGo (i + 1) vs
+    decodeGo 0 eq.vars
+  let allResults : List (Nat × Float) := (List.range dim).map fun state =>
+    let vals := decodeAll state
+    let valsInt := vals.map fun (_, vi) => vi
+    (state, diophantineCost eq valsInt)
+  let minEnergy := allResults.foldl (fun best ((_, e) : Nat × Float) =>
+    if e < best then e else best
+  ) 1e30
+  let threshold := if minEnergy < tolerance then minEnergy * 10.0 else minEnergy + 1.0
+  (allResults.filter fun ((_, e) : Nat × Float) => e <= threshold).map fun (state, e) =>
+    (decodeAll state, e)
+
+/--
+Resuelve ecuacion diofantina lineal por busqueda exhaustiva.
+Usa diophantineBruteForce internamente.
+-/
+def diophantineSolve (eq : Diophantine) : DiophantineResult :=
+  let results := diophantineBruteForce eq
+  match results with
+  | [] =>
+    { values := eq.vars.map fun v => (v.name, 0)
+    , energy := 1e30
+    , satisfied := false
+    }
+  | (vals, e) :: _ =>
+    { values := vals
+    , energy := e
+    , satisfied := e < 1e-6
+    }
+
+/--
+Evalua la energia VQE de una ecuacion diofantina (experimental).
+Devuelve DiophantineResult con valores = 0 y satisfied = false.
+Usar diophantineSolve para solucion real via busqueda exhaustiva.
+-/
+def diophantineEnergy (eq : Diophantine) (bitsPerVar : Nat := 4)
     (p : Nat := 1) (lr : Float := 0.05) (iters : Nat := 200) : DiophantineResult :=
   let n := eq.vars.length * bitsPerVar
   let H := toIsing eq bitsPerVar
