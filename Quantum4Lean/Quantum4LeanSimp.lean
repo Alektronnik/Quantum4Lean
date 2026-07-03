@@ -5,11 +5,13 @@ Simplificador simbolico de circuitos cuanticos (Term Rewriting).
 Aplica identidades algebraicas directamente sobre el AST de `Circuit n`.
 Sin multiplicar matrices, sin calcular flotantes. Escala a N arbitrario.
 
-Reglas implementadas:
-  1. Cancelacion: G*G = I para puertas self-inverse (H,X,Y,Z,CNOT,CZ,SWAP)
-  2. Pauli: H*X*H = Z, H*Z*H = X
-  3. Fase: S*S = Z, T*T = S
-  4. Conmutacion: puertas sobre qubits disjuntos conmutan
+Reglas implementadas (16 reglas):
+  1. Cancelacion: G*G = I (H,X,Y,Z,CNOT,CZ,SWAP)
+  2. Pauli: H*X*H = Z, H*Z*H = X, H*Y*H = Y
+  3. Fase: S*S = Z, T*T = S, T*T*T*T = Z
+  4. Sandwich: H*CNOT*H = CZ
+  5. Conmutacion: CNOT target/control commute, disjoint qubits
+  6. CNOT decomposition: CNOT*CNOT*CNOT = SWAP
 
 Uso:
   simplifyCircuit bellCircuit  -- Circuit 2 optimizado
@@ -179,7 +181,32 @@ private def tryCNOTSwapDecomp (a b c : Gate n) : Option (Gate n) :=
   | _, _, _ => none
 
 -- ===================================================================
--- Simplificador principal
+-- Nuevas reglas de simplificacion (v0.7.0)
+-- ===================================================================
+
+/-- T*T*T*T = Z (4 T consecutivas sobre el mismo qubit). --/
+private def tryT4 (gates : List (Gate n)) : Option (List (Gate n)) :=
+  match gates with
+  | .T q1 :: .T q2 :: .T q3 :: .T q4 :: rest =>
+    if q1.idx.val == q2.idx.val && q2.idx.val == q3.idx.val
+    && q3.idx.val == q4.idx.val then
+      some (.Z q1 :: rest)
+    else none
+  | _ => none
+
+/-- H*Y*H = -Y (fase global, simplificamos a Y). --/
+private def tryHYH (a b c : Gate n) : Option (Gate n) :=
+  match a, b, c with
+  | .H q1, .Y q2, .H q3 =>
+    if q1.idx.val == q2.idx.val && q2.idx.val == q3.idx.val then
+      some (.Y q1)
+    else none
+  | _, _, _ => none
+
+-- Z*Z = I adyacente (caso especial de cancelacion ya cubierto por isSelfInverse).
+
+-- ===================================================================
+-- Simplificador principal (actualizado v0.7.0)
 -- ===================================================================
 
 /--
@@ -220,9 +247,19 @@ partial def simplifyPass (gates : List (Gate n)) : List (Gate n) :=
             match tryHCNOTH a b c with
             | some g => simplifyPass (g :: rest')
             | none =>
+            match tryHYH a b c with
+            | some g => simplifyPass (g :: rest')
+            | none =>
             match tryCNOTSwapDecomp a b c with
             | some g => simplifyPass (g :: rest')
-            | none => a :: simplifyPass (b :: rest)
+            | none =>
+            -- Intenta regla de 4 puertas: T^4 = Z
+            match rest' with
+            | d :: rest'' =>
+              match tryT4 (a :: b :: c :: d :: rest'') with
+              | some gs => simplifyPass gs
+              | none => a :: simplifyPass (b :: rest)
+            | [] => a :: simplifyPass (b :: rest)
           | [] => a :: simplifyPass (b :: rest)
 
 /-- Compara dos listas de puertas elemento a elemento con gateEq. --/
