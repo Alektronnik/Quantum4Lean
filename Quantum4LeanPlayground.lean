@@ -16,6 +16,7 @@ Uso:
 
 import Quantum4LeanPlayground.QuantumPlaygroundDiophantine
 import Quantum4LeanPlayground.QuantumPlaygroundBeal
+import Quantum4LeanPlayground.QuantumPlaygroundFFI
 import Quantum4LeanPlayground.QuantumPlaygroundTijdeman
 import Quantum4LeanPlayground.QuantumPlaygroundRiemann
 import Quantum4LeanPlayground.QuantumPlaygroundTRDU
