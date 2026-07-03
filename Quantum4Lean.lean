@@ -12,17 +12,9 @@ Modulos activos:
   Quantum4LeanUnitary     Complex, UnitaryMatrix, circuitsEquiv
   Quantum4LeanObservable  PauliString, Observable, expect
   Quantum4LeanVQE         Parameter-shift, gradient, VQE
-  Quantum4LeanQAOA        Mixing layer, Ising cost layer
-
-Modulos conservados para futuro:
-  Quantum4LeanDSL         Macro circuit! (pendiente compatibilidad 4.7.0)
-  Quantum4LeanVerify      Identidades algebraicas (pendiente compatibilidad 4.7.0)
-  Quantum4LeanFFI         Bindings @[extern] (requiere QuantumKitCore)
-  Quantum4LeanSim         Runner FFI (requiere FFI)
-  Quantum4LeanMonad       Monada cuantica (requiere FFI)
-  Quantum4LeanCompile     Circuit -> QuantumM (requiere Monad)
-  Quantum4LeanExamples    Bell, GHZ, Grover, QFT (requiere Sim)
-  Quantum4LeanTest        55 aserciones (requiere Unitary activo)
+  Quantum4LeanDSL         Macro circuit!, q[i], Shortcuts
+  Quantum4LeanTactic      circuit_equiv, quantum_simp
+  Quantum4LeanPolynomial  Traductor polinomico (monomios <= 3)
 -/
 
 import Quantum4Lean.Quantum4LeanCore
@@ -40,6 +32,7 @@ import Quantum4Lean.Quantum4LeanQAOA
 import Quantum4Lean.Quantum4LeanDSL
 import Quantum4Lean.Quantum4LeanTactic
 import Quantum4Lean.Quantum4LeanPolynomial
+import Quantum4Lean.Quantum4LeanSolver
 
 export Quantum4Lean (Qubit Gate Circuit StateVector
   executeSim executeSimProbs
@@ -55,6 +48,7 @@ export Quantum4Lean (Qubit Gate Circuit StateVector
   DiophantineVar Diophantine DiophantineResult
   toIsing diophantineSolve checkSolution decodeValues
   Monomial PolyEquation PolyResult
-  expandVarPower expandMonomial polyToIsing polyTotalQubits)
+  expandVarPower expandMonomial polyToIsing polyTotalQubits
+  intToFloat decodeState evalCost bruteForceSolve)
 
 -- DSL y tacticas disponibles via `import Quantum4Lean` automaticamente

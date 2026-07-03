@@ -261,9 +261,7 @@ Quantum4Lean/
 |   +-- Quantum4LeanClifford.lean  -- Verificacion Clifford (Z[i])
 |   +-- Quantum4LeanDiophantine.lean-- Traductor diofantino lineal
 |   +-- Quantum4LeanPolynomial.lean -- Traductor polinomico
-|   +-- Quantum4LeanFFI.lean        -- Bindings @[extern]
 |   +-- Quantum4LeanRunner.lean    -- Ejecutable de tests
-|   +-- (6 modulos conservados)    -- Compile, Examples, Monad, Sim, Test, Verify
 +-- Quantum4LeanPlayground.lean    -- Root del Playground
 +-- Quantum4LeanPlayground/
 |   +-- QuantumPlaygroundDiophantine.lean

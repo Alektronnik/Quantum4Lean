@@ -6,10 +6,10 @@ Conjetura de Beal: a^x + b^y = c^z con gcd(a,b,c) > 1.
 -/
 
 import Quantum4Lean
-import Quantum4LeanPlayground.QuantumPlaygroundCommon
+import Quantum4Lean
 
 open Quantum4Lean
-open Quantum4LeanPlayground.Common
+open Quantum4Lean
 
 namespace Quantum4LeanPlayground.Beal
 

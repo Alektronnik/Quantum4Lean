@@ -1,13 +1,16 @@
 /-
-QuantumPlaygroundCommon.lean
-Utilidades compartidas por todos los Playgrounds Diofantinos.
+Quantum4LeanSolver.lean
+Utilidades compartidas: decode, eval, brute force search.
+Usado por Diophantine, Polynomial, y Playgrounds.
 -/
 
-import Quantum4Lean
+import Quantum4Lean.Quantum4LeanCore
+import Quantum4Lean.Quantum4LeanObservable
+import Quantum4Lean.Quantum4LeanPolynomial
 
 open Quantum4Lean
 
-namespace Quantum4LeanPlayground.Common
+namespace Quantum4Lean
 
 def intToFloat (x : Int) : Float :=
   if x >= 0 then x.toNat.toFloat else -(((-x).toNat.toFloat))
@@ -22,11 +25,10 @@ def decodeState (varBits : List Nat) (state : Nat) : List Int :=
     | [] => []
     | bits :: rest =>
       let start := offsets.get! i
-      let valNat : Nat := (List.range bits).foldl (fun (acc : Nat) (j : Nat) =>
+      let valNat := (List.range bits).foldl (fun (acc : Nat) (j : Nat) =>
         if ((state >>> (start + j)) &&& 1) == 1 then acc + (1 <<< j) else acc
       ) 0
-      let val : Int := valNat
-      val :: valueGo (i + 1) rest
+      Int.ofNat valNat :: valueGo (i + 1) rest
   valueGo 0 varBits
 
 def evalCost (eq : PolyEquation) (vals : List Int) : Float :=
@@ -60,4 +62,4 @@ def bruteForceSolve (eq : PolyEquation) (tolerance : Float := 1e-6)
   solutions.map fun (state, e) =>
     (decodeState eq.varBits state, e)
 
-end Quantum4LeanPlayground.Common
+end Quantum4Lean

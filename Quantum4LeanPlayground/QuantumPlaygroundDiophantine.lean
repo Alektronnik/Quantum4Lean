@@ -7,10 +7,10 @@ Dependencias: Quantum4Lean, QuantumPlaygroundCommon.
 -/
 
 import Quantum4Lean
-import Quantum4LeanPlayground.QuantumPlaygroundCommon
+import Quantum4Lean
 
 open Quantum4Lean
-open Quantum4LeanPlayground.Common
+open Quantum4Lean
 
 namespace Quantum4LeanPlayground.Diophantine
 
@@ -109,7 +109,7 @@ def solveCase (c : DiophantineCase) : String :=
     | 2 => ["x", "y"]
     | 3 => ["x", "y", "z"]
     | _ => List.range nVars |>.map fun i => s!"v{i}"
-  let solutions := bruteForceSolve eq
+  let solutions : List (List Int × Float) := bruteForceSolve eq
   let foundStr := match solutions with
     | [] => "NINGUNA"
     | [(vals, e)] =>

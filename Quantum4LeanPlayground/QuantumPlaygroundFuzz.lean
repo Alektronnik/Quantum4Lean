@@ -9,10 +9,10 @@ Dependencias: Quantum4Lean, QuantumPlaygroundCommon.
 -/
 
 import Quantum4Lean
-import Quantum4LeanPlayground.QuantumPlaygroundCommon
+import Quantum4Lean
 
 open Quantum4Lean
-open Quantum4LeanPlayground.Common
+open Quantum4Lean
 
 namespace Quantum4LeanPlayground.Fuzz
 
@@ -28,7 +28,7 @@ def generateWithSolution (numVars : Nat) (maxBits : Nat) (seed : Nat)
   let (varBits, s1) := (List.range numVars).foldl
     (fun ((bs, s) : List Nat × Nat) _ =>
       let (b, s') := randInt s (maxBits - 1)
-      (bs ++ [b + 1], s')
+      (bs ++ [b.toNat + 1], s')
     ) ([], seed)
   let (solution, s2) := varBits.foldl
     (fun ((vs, s) : List Int × Nat) (bits : Nat) =>
