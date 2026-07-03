@@ -228,13 +228,13 @@ partial def simplifyPass (gates : List (Gate n)) : List (Gate n) :=
       | none =>
         -- CNOT commutation + general commutation
         match tryCNOTTargetCommute a b with
-        | some [g1, g2] => g2 :: simplifyPass (g1 :: rest)
+        | some [g1, g2] => g1 :: simplifyPass (g2 :: rest)
         | _ =>
         match tryCNOTControlCommute a b with
-        | some [g1, g2] => g2 :: simplifyPass (g1 :: rest)
+        | some [g1, g2] => g1 :: simplifyPass (g2 :: rest)
         | _ =>
         match tryCommute a b with
-        | some [g1, g2] => g2 :: simplifyPass (g1 :: rest)
+        | some [g1, g2] => g1 :: simplifyPass (g2 :: rest)
         | _ =>
           match rest with
           | c :: rest' =>

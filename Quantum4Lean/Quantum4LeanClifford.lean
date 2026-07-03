@@ -170,28 +170,38 @@ private def expandSWAP {n : Nat} (a b : Nat) : CliffordMatrix n :=
 -- Compilacion y equivalencia
 -- ===================================================================
 
-/-- Matriz Clifford de una puerta. Puertas no-Clifford devuelven I. --/
-def gateMatrix {n : Nat} (g : Gate n) : CliffordMatrix n :=
+/-- Matriz Clifford de una puerta. Puertas no-Clifford devuelven none. --/
+def gateMatrix {n : Nat} (g : Gate n) : Option (CliffordMatrix n) :=
   match g with
-  | .X q    => expand1Q gateXC q.idx.val
-  | .Y q    => expand1Q gateYC q.idx.val
-  | .Z q    => expand1Q gateZC q.idx.val
-  | .S q    => expand1Q gateSC q.idx.val
-  | .CNOT ctrl tgt => expandCNOT ctrl.idx.val tgt.idx.val
-  | .CZ   ctrl tgt => expandCZ   ctrl.idx.val tgt.idx.val
-  | .SWAP a b      => expandSWAP a.idx.val b.idx.val
-  -- No-Clifford gates: identity (no verificables con este modulo)
-  | _ => CliffordMatrix.identity n
+  | .X q    => some (expand1Q gateXC q.idx.val)
+  | .Y q    => some (expand1Q gateYC q.idx.val)
+  | .Z q    => some (expand1Q gateZC q.idx.val)
+  | .S q    => some (expand1Q gateSC q.idx.val)
+  | .CNOT ctrl tgt => some (expandCNOT ctrl.idx.val tgt.idx.val)
+  | .CZ   ctrl tgt => some (expandCZ   ctrl.idx.val tgt.idx.val)
+  | .SWAP a b      => some (expandSWAP a.idx.val b.idx.val)
+  -- Puertas no-Clifford: rechazadas
+  | _ => none
 
-/-- Compila un circuito a su matriz Clifford. Puertas no-Clifford se ignoran. --/
-def compileClifford {n : Nat} (c : Circuit n) : CliffordMatrix n :=
-  c.gates.foldl (fun (m : CliffordMatrix n) (g : Gate n) =>
-    CliffordMatrix.mul (gateMatrix g) m
-  ) (CliffordMatrix.identity n)
+/-- Compila un circuito a su matriz Clifford. Puertas no-Clifford causan fallo. --/
+def compileClifford {n : Nat} (c : Circuit n) : Option (CliffordMatrix n) :=
+  c.gates.foldl (fun (mo : Option (CliffordMatrix n)) (g : Gate n) =>
+    match mo with
+    | none => none
+    | some m =>
+      match gateMatrix g with
+      | none => none
+      | some gm => some (CliffordMatrix.mul gm m)
+  ) (some (CliffordMatrix.identity n))
 
-/-- Equivalencia de circuitos Clifford via comparacion entera. --/
+/--
+Equivalencia de circuitos Clifford via comparacion entera.
+Devuelve false si algun circuito contiene puertas no-Clifford.
+-/
 def cliffordEquiv {n : Nat} (c1 c2 : Circuit n) : Bool :=
-  CliffordMatrix.equal (compileClifford c1) (compileClifford c2)
+  match compileClifford c1, compileClifford c2 with
+  | some m1, some m2 => CliffordMatrix.equal m1 m2
+  | _, _ => false
 
 -- ===================================================================
 -- Helper: Qubit para n=2
