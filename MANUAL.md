@@ -66,13 +66,13 @@ Quantum4Lean sigue tres principios:
 
 ### Requisitos
 
-- Lean 4 v4.7.0
+- Lean 4 v4.31.0
 - macOS, Linux, o Windows
 
 ### Instalacion de Lean 4
 
 ```bash
-curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y --default-toolchain leanprover/lean4:4.7.0
+curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y --default-toolchain leanprover/lean4:4.31.0
 export PATH="$HOME/.elan/bin:$PATH"
 ```
 
@@ -486,11 +486,13 @@ example : circuitsEquiv
 8 teoremas documentan la correccion de cada regla del simplificador:
 
 ```lean
-theorem rule_X_X_eq_I : circuitsEquiv ... (Circuit.identity 2) := by sorry
-theorem rule_CNOT_CNOT_eq_I : ...
-theorem rule_SWAP_SWAP_eq_I : ...
-theorem rule_S_S_eq_Z : ...
-theorem rule_CNOT_swap_decomposition : ...
+-- Ver Quantum4LeanTheorems.lean para las demostraciones completas.
+-- 8 teoremas Clifford probados con `native_decide`.
+-- Ejemplo:
+theorem X_X_eq_I : cliffordEquiv
+    (circuit fun c => (c.add (Gate.X q0)).add (Gate.X q0))
+    (Circuit.identity 2) := by
+  native_decide
 ```
 
 Los `sorry` marcan la limitacion conocida: `native_decide` en Lean 4.7.0 no reduce Float. Verificacion runtime via `#eval circuitsEquiv`.

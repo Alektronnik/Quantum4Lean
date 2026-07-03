@@ -41,13 +41,12 @@ def ffiFinalize (token : UInt64) : IO Unit := do
   let _ <- quantum4LeanFinalize token
   pure ()
 
-/-- Aplica puerta. qa y qb son indices de qubit (Nat). qb=0 para puertas 1-qubit. --/
+/-- Aplica puerta. Devuelve codigo de error (0 = exito). --/
 def ffiGate (token : UInt64) (estado : FloatArray) (t : UInt32) (qa qb : Nat)
-    (param : Float := 0.0) : IO Unit := do
-  let err <- quantum4LeanApplyGate token t (qa.toUInt32) (qb.toUInt32) param estado
-  if err != 0 then IO.println ("Error gate " ++ toString t ++ " q" ++ toString qa ++ " q" ++ toString qb ++ ": " ++ toString err)
+    (param : Float := 0.0) : IO UInt32 := do
+  quantum4LeanApplyGate token t (qa.toUInt32) (qb.toUInt32) param estado
 
-/-- Mide qubit k. Devuelve bit (0 o 1). -1 codificado como UInt32 max si error. --/
+/-- Mide qubit k. Devuelve bit (0 o 1). 0xFFFFFFFF si error. --/
 def ffiMeasure (token : UInt64) (estado : FloatArray) (q : Nat) : IO UInt32 := do
   quantum4LeanMeasure token (q.toUInt32) estado
 
@@ -55,29 +54,40 @@ def ffiMeasure (token : UInt64) (estado : FloatArray) (q : Nat) : IO UInt32 := d
 def runDemo20 : IO String := do
   IO.println "=== FFI Demo: 20 qubits ==="
   let (token, estado) <- ffiInit 20
+  let mut errCount : Nat := 0
   for i in [0:12] do
-    ffiGate token estado HADAMARD i 0
+    let err <- ffiGate token estado HADAMARD i 0
+    if err != 0 then errCount := errCount + 1
   let b0 <- ffiMeasure token estado 0
   let b11 <- ffiMeasure token estado 11
   ffiFinalize token
-  return "FFI 20q OK. Muestras: q0=" ++ toString b0 ++ ", q11=" ++ toString b11
+  if errCount > 0 then
+    return s!"FFI 20q FAIL: {errCount} errores de puerta"
+  return s!"FFI 20q OK. Muestras: q0={b0}, q11={b11}"
 
-/-- Stress test: 30 qubits. --/
-def runStress30 : IO String := do
-  IO.println "=== FFI Stress: 30 qubits ==="
-  let (token, estado) <- ffiInit 30
-  for i in [0:30] do
-    ffiGate token estado HADAMARD i 0
+/--
+Stress test: 25 qubits (~512 MB). Para 30 qubits se necesitan ~34 GB
+de RAM unificada (Apple Silicon M2 Max/M3 Ultra).
+-/
+def runStress25 : IO String := do
+  IO.println "=== FFI Stress: 25 qubits (~512 MB) ==="
+  let (token, estado) <- ffiInit 25
+  let mut errCount : Nat := 0
+  for i in [0:25] do
+    let err <- ffiGate token estado HADAMARD i 0
+    if err != 0 then errCount := errCount + 1
   let b0 <- ffiMeasure token estado 0
-  let b15 <- ffiMeasure token estado 15
-  let b29 <- ffiMeasure token estado 29
+  let b12 <- ffiMeasure token estado 12
+  let b24 <- ffiMeasure token estado 24
   ffiFinalize token
-  return "FFI 30q OK. Muestras: q0=" ++ toString b0 ++ ", q15=" ++ toString b15 ++ ", q29=" ++ toString b29
+  if errCount > 0 then
+    return s!"FFI 25q FAIL: {errCount} errores de puerta"
+  return s!"FFI 25q OK. Muestras: q0={b0}, q12={b12}, q24={b24}"
 
 /-- Reporte completo. --/
 def report : IO String := do
   let d20 <- runDemo20
-  let s30 <- runStress30
-  return d20 ++ "\n\n" ++ s30
+  let s25 <- runStress25
+  return d20 ++ "\n\n" ++ s25
 
 end Quantum4LeanPlayground.FFI

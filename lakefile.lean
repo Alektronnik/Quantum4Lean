@@ -42,6 +42,8 @@ Ejecutable FFI (CPU-only): puente a motor C++ sin Metal.
 -/
 lean_exe «quantum4lean-ffi» where
   root := `Quantum4LeanPlayground.QuantumPlaygroundFFICPU
+  -- Requiere LEAN_CC=clang. Ajusta la ruta a tu toolchain Lean.
+  -- Ruta tipica: ~/.elan/toolchains/leanprover--lean4---v4.31.0/lib
   moreLinkArgs := #[
     "-L.", "-lQuantum4LeanCPU",
     "-L", "/Users/bezalelizquierdoperez/.elan/toolchains/leanprover--lean4---v4.31.0/lib",
