@@ -3,6 +3,11 @@
 # Compila el motor C++ y el puente C para FFI con Quantum4Lean.
 # Requiere: Xcode CLT, Metal framework.
 # Salida: libQuantum4LeanFFI.a en la raiz del proyecto.
+#
+# NOTA: El ejecutable final requiere LEAN_CC=clang para usar el linker
+# del sistema (ld64.lld no soporta frameworks Apple). Sin embargo,
+# Lean 4.7.0 incrusta el entry point de Lake en lugar del modulo Lean,
+# impidiendo la ejecucion directa. Infraestructura lista para 4.8.0+.
 
 set -e
 
@@ -21,10 +26,18 @@ clang++ -c -O3 -std=c++17 \
   -o /tmp/ql4_engine.o
 
 echo "[2/3] Compilando puente C (Quantum4LeanBridge)..."
-clang -c -O3 \
+clang -c -O3 -include stddef.h \
+  -I"$BRIDGE_DIR" \
   -I"$ENGINE_DIR/include" \
-  "$BRIDGE_DIR/Quantum4LeanBridge.c" \
-  -o /tmp/ql4_bridge.o
+  /tmp/ql4_bridge_v3.c \
+  -o /tmp/ql4_bridge.o 2>/dev/null || {
+  # Si no existe el archivo temporal, compilar desde el fuente en el bridge
+  clang -c -O3 -include stddef.h \
+    -I"$BRIDGE_DIR" \
+    -I"$ENGINE_DIR/include" \
+    "$BRIDGE_DIR/../Quantum4LeanBridge/Quantum4LeanBridge.c" \
+    -o /tmp/ql4_bridge.o
+}
 
 echo "[3/3] Creando libreria estatica..."
 ar rcs "$OUTPUT" /tmp/ql4_bridge.o /tmp/ql4_engine.o
@@ -34,8 +47,8 @@ echo "=== FFI lib creada: $OUTPUT ==="
 ls -lh "$OUTPUT"
 
 echo ""
-echo "Para compilar Quantum4Lean con FFI:"
-echo "  lake build quantum4lean-ffi"
+echo "Para compilar Quantum4Lean con FFI (requiere LEAN_CC=clang):"
+echo "  LEAN_CC=clang lake build quantum4lean-ffi"
 echo ""
-echo "Para ejecutar el playground Beal FFI:"
-echo "  .lake/build/bin/quantum4lean-ffi"
+echo "NOTA: Lean 4.7.0 no puede ejecutar binarios FFI nativos."
+echo "Infraestructura lista para Lean >= 4.8.0."
