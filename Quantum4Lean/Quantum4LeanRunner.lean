@@ -97,7 +97,64 @@ def main : IO UInt32 := do
     IO.println "  FAIL: QASM invalido"
 
   -- ================================================================
-  -- 5. Resumen
+  -- 5. Quantum Chemistry (Jordan-Wigner)
+  -- ================================================================
+  IO.println "\n=== Chemistry Tests ==="
+  -- Test H2 Observable generation
+  let h2 := h2Observable
+  let h2ok := h2.strings.length >= 100  -- Debe tener muchos terminos
+  if h2ok then
+    IO.println s!"  OK: H2 -> {h2.strings.length} PauliStrings (4 qubits)"
+  else
+    exitCode := 1
+    IO.println s!"  FAIL: H2 solo tiene {h2.strings.length} PauliStrings"
+
+  -- Test LiH Observable generation
+  let lih := lihObservable
+  let lihok := lih.strings.length >= 10
+  if lihok then
+    IO.println s!"  OK: LiH -> {lih.strings.length} PauliStrings (6 qubits)"
+  else
+    exitCode := 1
+    IO.println s!"  FAIL: LiH solo tiene {lih.strings.length} PauliStrings"
+
+  -- Test Jordan-Wigner a_0 operator
+  let a0 := jwSingle 0 .annihilation
+  let a0ok := a0.length == 2
+  if a0ok then
+    IO.println "  OK: jwSingle(a_0) = 2 PauliStrings"
+  else
+    exitCode := 1
+    IO.println s!"  FAIL: jwSingle(a_0) = {a0.length}"
+
+  -- Test number operator n_0 = a_0^† a_0
+  let n0 := jwTermToObservable { operators := [(0, .creation), (0, .annihilation)] }
+  let n0ok := n0.strings.length >= 2
+  if n0ok then
+    IO.println s!"  OK: n_0 -> {n0.strings.length} PauliStrings"
+  else
+    exitCode := 1
+    IO.println s!"  FAIL: n_0 solo tiene {n0.strings.length}"
+
+  -- Test expectation on Hartree-Fock state
+  match StateVector.init 4 with
+  | Except.error e =>
+    exitCode := 1
+    IO.println s!"  FAIL: StateVector.init(4): {e}"
+  | Except.ok sv =>
+    let q0 : Qubit 4 := ⟨⟨0, by decide⟩⟩
+    let q1 : Qubit 4 := ⟨⟨1, by decide⟩⟩
+    let sv := StateVector.applyGate (StateVector.applyGate sv (Gate.X q0)) (Gate.X q1)
+    let eHF := expect sv h2
+    let eOk := eHF < 0.0  -- Bound state: energy must be negative
+    if eOk then
+      IO.println s!"  OK: E(HF) = {eHF} (negativa, estado ligado)"
+    else
+      exitCode := 1
+      IO.println s!"  FAIL: E(HF) = {eHF} (deberia ser negativa)"
+
+  -- ================================================================
+  -- 6. Resumen
   -- ================================================================
   IO.println "\n=============================================="
   if exitCode == 0 then
