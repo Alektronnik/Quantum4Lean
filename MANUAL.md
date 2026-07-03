@@ -18,13 +18,15 @@ v0.6.1. Julio 2026.
 12. [Fuzzer Intra-Lean](#12-fuzzer-intra-lean)
 13. [Traductor Diofantino](#13-traductor-diofantino)
 14. [Traductor Polinomico](#14-traductor-polinomico)
-15. [ADAM Optimizer](#15-adam-optimizer)
-16. [Playground](#16-playground)
-17. [Exportador OpenQASM 3.0](#17-exportador-openqasm-30)
-18. [Density Matrix y Canales de Ruido](#18-density-matrix-y-canales-de-ruido)
-19. [Puente FFI (Apple Silicon / Metal 3)](#19-puente-ffi-apple-silicon--metal-3)
-20. [API de Referencia](#20-api-de-referencia)
-21. [Arquitectura del Proyecto](#21-arquitectura-del-proyecto)
+15. [ADAM Optimizer + VQE Adaptativo](#15-adam-optimizer--vqe-adaptativo)
+16. [Quimica Cuantica (Jordan-Wigner)](#16-quimica-cuantica-jordan-wigner)
+17. [Topologia Discreta (Hodge + Betti + FirmaPrima)](#17-topologia-discreta-hodge--betti--firmaprima)
+18. [Playground](#18-playground)
+19. [Exportador OpenQASM 3.0](#19-exportador-openqasm-30)
+20. [Density Matrix y Canales de Ruido](#20-density-matrix-y-canales-de-ruido)
+21. [Puente FFI (Apple Silicon / Metal 3)](#21-puente-ffi-apple-silicon--metal-3)
+22. [API de Referencia](#22-api-de-referencia)
+23. [Arquitectura del Proyecto](#23-arquitectura-del-proyecto)
 
 ---
 

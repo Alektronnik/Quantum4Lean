@@ -1,8 +1,8 @@
 # Quantum4Lean
 
-Computacion cuantica verificada en Lean 4. Motor puro-Lean bit-exacto. Stack NISQ completo: StateVector, Observables, VQE, QAOA, Density Matrix + ruido. DSL declarativo, exportador OpenQASM 3.0, tactica `circuit_equiv` y fuzzer intra-Lean.
+Computacion cuantica verificada en Lean 4. Motor puro-Lean bit-exacto. Stack NISQ completo: StateVector, Observables, VQE adaptativo, QAOA, Density Matrix + ruido, Jordan-Wigner. DSL declarativo, exportador OpenQASM 3.0, Hodge decomposition + topologia discreta, tactica `circuit_equiv` y fuzzer intra-Lean.
 
-Estado: v0.6.1 -- 21 modulos libreria, 6 playgrounds, 12 teoremas verificados, 208 tests fuzz.
+Estado: v0.6.1 -- 23 modulos libreria, 7 playgrounds, 12 teoremas verificados, 208 tests fuzz.
 
 ## Build
 
@@ -16,13 +16,13 @@ Cero dependencias externas. Requiere Lean 4.31.0 (`lean-toolchain`).
 ## Arquitectura
 
 ```
-Quantum4Lean (21 modulos)
+Quantum4Lean (23 modulos)
   Core, Error, Engine, Fuzz, Unitary, Observable, VQE, QAOA,
   Diophantine, Polynomial, Solver, Simp, Transpile, Clifford,
-  Verify, DSL, Tactic, FFI, QASM, Density, Runner
+  Verify, DSL, Tactic, FFI, QASM, Density, Chemistry, Topology, Runner
 
-Quantum4LeanPlayground (6 demos)
-  Diophantine, Beal, Tijdeman, Riemann, TRDU, FFI
+Quantum4LeanPlayground (7 demos)
+  Diophantine, Beal, Tijdeman, Riemann, TRDU, FFI, Mobius
 ```
 
 ## Uso rapido
