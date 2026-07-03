@@ -46,7 +46,7 @@ Quantum4Lean es una plataforma de computacion cuantica verificada en Lean 4. Pro
 - **DSL declarativo**: `circuit! { H q[0]; CNOT q[0] q[1] }`
 - **Exportador OpenQASM 3.0**: circuitos verificados a formato ejecutable en IBM/AWS
 - **Density Matrix + Ruido**: simulacion de decoherencia para era NISQ
-- **Puente FFI**: motor C++/Metal 3 para hasta 30 qubits
+- **Puente FFI**: motor C++/Metal 3 para hasta 25 qubits (~1 GB RAM)
 - **Cero dependencias externas**: `lake build quantum4lean-test` + `./.lake/build/bin/quantum4lean-test`
 - **Lean 4.31.0** compatible
 
@@ -89,7 +89,7 @@ Cero dependencias externas. Sin mathlib4, sin binarios C++.
 ### Verificar instalacion
 
 ```bash
-./build/bin/quantum4lean-test
+lake build quantum4lean-test && .lake/build/bin/quantum4lean-test
 ```
 
 Salida esperada:
@@ -271,7 +271,7 @@ let resultado := StateVector.run miCircuito 123456789 1
 
 ### Motor FFI (opcional)
 
-Para N > 10 qubits o GPU Metal 3. Hasta 30 qubits en Apple Silicon.
+Para N > 10 qubits o GPU Metal 3. Hasta 25 qubits en Apple Silicon.
 
 ```bash
 # Requisito previo: compilar QuantumKitCore (proyecto hermano)
@@ -907,7 +907,7 @@ let rho := DensityMatrix.amplitudeDamping rho 0 0.05
 ## 19. Puente FFI (CPU + Metal)
 
 El puente FFI conecta Quantum4Lean con el motor C++ (CoreQU4TRIX)
-para simulaciones de hasta 30 qubits.
+para simulaciones de hasta 25 qubits.
 
 ### Arquitectura
 
@@ -933,7 +933,7 @@ bash buildMetal.sh && LEAN_CC=clang lake build quantum4lean-ffi-metal
 
 ### Estado actual
 
-Modo CPU: compila, enlaza y ejecuta (50/50 build). Hasta 30 qubits.
+Modo CPU: compila, enlaza y ejecuta (50/50 build). Hasta 25 qubits.
 Modo Metal: compila, requiere `LEAN_CC=clang` para enlazar frameworks Apple.
 
 ---
