@@ -140,7 +140,7 @@ def applyGate (rho : DensityMatrix n) (gate : Gate n) : DensityMatrix n :=
   | .Unitary q m => apply1Q rho (k q) m
   | .CNOT c t =>
     let kc := k c; let kt := k t
-    let maskC := 1 <<< kc; let maskT := 1 <<< kt
+    let maskT := 1 <<< kt
     let d := rho.dim
     let result : DensityMatrix n :=
       { data := (List.range (2*d*d)).foldl (fun arr _ => arr.push 0.0) (Array.mkEmpty (2*d*d))
@@ -157,7 +157,6 @@ def applyGate (rho : DensityMatrix n) (gate : Gate n) : DensityMatrix n :=
     ) result
   | .CZ c t =>
     let kc := k c; let kt := k t
-    let maskC := 1 <<< kc; let maskT := 1 <<< kt
     let d := rho.dim
     let result : DensityMatrix n :=
       { data := (List.range (2*d*d)).foldl (fun arr _ => arr.push 0.0) (Array.mkEmpty (2*d*d))
@@ -231,7 +230,6 @@ def amplitudeDamping (rho : DensityMatrix n) (k : Nat) (gamma : Float) : Density
 
 def phaseDamping (rho : DensityMatrix n) (k : Nat) (lambda : Float) : DensityMatrix n :=
   let d := rho.dim
-  let mask := 1 <<< k
   let factor := 1.0 - 2.0 * lambda
   (List.range d).foldl (fun (m : DensityMatrix n) (i : Nat) =>
     (List.range d).foldl (fun (m2 : DensityMatrix n) (j : Nat) =>

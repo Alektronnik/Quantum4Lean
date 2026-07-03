@@ -167,7 +167,7 @@ private def listSqrt (xs : List Float) : List Float :=
 /-- Paso ADAM: actualiza parametros, momentos y varianzas. --/
 def adamStep (params m v : List Float) (grad : List Float) (lr : Float)
     (beta1 beta2 eps : Float) (t : Nat) : List Float × List Float × List Float :=
-  let k := params.length
+  let _k := params.length
   -- Actualizar momentos
   let newM := listAdd (listScale m beta1) (listScale grad (1.0 - beta1))
   let newV := listAdd (listScale v beta2) (listScale (listMul grad grad) (1.0 - beta2))
