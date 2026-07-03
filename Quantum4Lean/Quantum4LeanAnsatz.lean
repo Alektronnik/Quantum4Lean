@@ -1,31 +1,22 @@
 /-
-MobiusAnsatz.lean
-Hardware Efficient Ansatz (HEA) para quimica cuantica.
-
-Disenado para el experimento Half-Mobius C13Cl2 (IBM, Science 2026).
+Quantum4LeanAnsatz.lean
+Hardware Efficient Ansatz (HEA) para VQE quimico.
 
 Estructura por capa:
-  1. Ry(θ_i) en cada qubit (rotacion Y parametrizada)
-  2. Rz(θ_i) en cada qubit (rotacion Z parametrizada)
-  3. Anillo CNOT: CNOT(0,1), CNOT(1,2), ..., CNOT(n-2,n-1), CNOT(n-1,0)
+  1. Ry(θ_i) en cada qubit
+  2. Rz(θ_i) en cada qubit
+  3. Anillo CNOT completo (incluye cierre n-1 -> 0)
 
 Parametros: 2 * n * depth (Ry + Rz por qubit por capa).
-
-El anillo CNOT completo (incluyendo cierre n-1->0) genera
-entrelazamiento maximal, necesario para capturar correlaciones
-electronicas en sistemas moleculares complejos.
+Entrelazamiento maximal para correlaciones electronicas.
 -/
 
 import Quantum4Lean.Quantum4LeanCore
 
-namespace Quantum4LeanPlayground.Mobius
-
-open Quantum4Lean
+namespace Quantum4Lean
 
 /--
-Construye una capa del HEA: Ry(θ) + Rz(θ) + CNOT ring.
-
-Parametros para esta capa: 2*n floats [Ry0, Rz0, Ry1, Rz1, ...].
+Capa HEA: Ry(θ) + Rz(θ) + CNOT ring.
 -/
 def heaLayer (n : Nat) (params : List Float) (offset : Nat) : Circuit n :=
   let gatesRy : List (Gate n) :=
@@ -70,4 +61,4 @@ Numero de parametros necesarios para el ansatz.
 -/
 def mobiusAnsatzNumParams (n : Nat) (depth : Nat) : Nat := 2 * n * depth
 
-end Quantum4LeanPlayground.Mobius
+end Quantum4Lean

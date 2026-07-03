@@ -21,6 +21,7 @@ Modulos activos:
   Quantum4LeanDensity     Density Matrix + ruido NISQ
   Quantum4LeanChemistry   Jordan-Wigner + quimica cuantica
   Quantum4LeanTopology    Hodge decomposition + Betti + FirmaPrima
+  Quantum4LeanAnsatz      Hardware Efficient Ansatz (HEA)
 -/
 
 import Quantum4Lean.Quantum4LeanCore
@@ -44,6 +45,7 @@ import Quantum4Lean.Quantum4LeanQASM
 import Quantum4Lean.Quantum4LeanDensity
 import Quantum4Lean.Quantum4LeanChemistry
 import Quantum4Lean.Quantum4LeanTopology
+import Quantum4Lean.Quantum4LeanAnsatz
 
 export Quantum4Lean (Qubit Gate Circuit StateVector
   executeSim executeSimProbs
@@ -69,6 +71,7 @@ export Quantum4Lean (Qubit Gate Circuit StateVector
   lihHamiltonian lihObservable
   mobiusTopologyObservable mobiusObservable
   SparseMatrix bettiNumber harmonicProjector
-  FirmaPrima firmaPrima topologicalKappa)
+  FirmaPrima firmaPrima topologicalKappa
+  heaLayer mobiusAnsatz mobiusAnsatzNumParams)
 
 -- DSL y tacticas disponibles via `import Quantum4Lean` automaticamente
