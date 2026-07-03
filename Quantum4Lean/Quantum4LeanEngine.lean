@@ -111,6 +111,7 @@ private def gateRZ (theta : Float) : Array Float :=
 -- ===================================================================
 
 private def applyUnitaryInPlace (sv : StateVector) (k : Nat) (gate : Array Float) : StateVector :=
+  if gate.size ≠ 8 then sv else
   let numPares := sv.dim >>> 1
   let U00r := gate[0]!;  let U00i := gate[1]!
   let U01r := gate[2]!;  let U01i := gate[3]!
@@ -271,8 +272,21 @@ def applyGate (sv : StateVector) (gate : Gate n) : StateVector :=
 def runCircuit (sv : StateVector) (circuit : Circuit n) : StateVector :=
   circuit.gates.foldl (fun (cur : StateVector) (g : Gate n) => applyGate cur g) sv
 
+private def validateGate : Gate n -> Except String Unit
+  | .Unitary _ matrix =>
+      if matrix.size == 8 then Except.ok ()
+      else Except.error s!"Gate.Unitary: matrix size={matrix.size}, esperado 8 floats"
+  | _ => Except.ok ()
+
+private def validateGates : List (Gate n) -> Except String Unit
+  | [] => Except.ok ()
+  | g :: gs => do
+      validateGate g
+      validateGates gs
+
 def run (circuit : Circuit n) (seed : UInt64 := DEFAULT_SEED) (shots : Nat := 1) :
     Except String (List Nat) := do
+  validateGates circuit.gates
   let sv <- StateVector.init n seed
   let finalSv := runCircuit sv circuit
   let probs := StateVector.probabilities finalSv
@@ -312,6 +326,7 @@ def executeSim {n : Nat} (c : Circuit n) (seed : UInt64 := 123456789) : Except S
   StateVector.run c seed 1
 
 def executeSimProbs {n : Nat} (c : Circuit n) (seed : UInt64 := 123456789) : Except String (Array Float) := do
+  StateVector.validateGates c.gates
   let sv <- StateVector.init n seed
   let finalSv := StateVector.runCircuit sv c
   Except.ok (StateVector.probabilities finalSv)

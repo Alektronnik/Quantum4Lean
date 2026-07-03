@@ -24,7 +24,7 @@ def heaLayer (n : Nat) (params : List Float) (offset : Nat) : Circuit n :=
       let pIdx := offset + 2 * i
       if h : i < n then
         let q := Qubit.ofNat i h
-        let theta := params[pIdx]!
+        let theta := params[pIdx]? |>.getD 0.0
         some (Gate.RY q theta)
       else none
   let gatesRz : List (Gate n) :=
@@ -32,17 +32,20 @@ def heaLayer (n : Nat) (params : List Float) (offset : Nat) : Circuit n :=
       let pIdx := offset + 2 * i + 1
       if h : i < n then
         let q := Qubit.ofNat i h
-        let theta := params[pIdx]!
+        let theta := params[pIdx]? |>.getD 0.0
         some (Gate.RZ q theta)
       else none
   let gatesCNOT : List (Gate n) :=
-    (List.range n).filterMap fun i =>
-      let j := if i + 1 < n then i + 1 else 0
-      if hi : i < n then
-        if hj : j < n then
-          some (Gate.CNOT (Qubit.ofNat i hi) (Qubit.ofNat j hj))
+    if n < 2 then []
+    else
+      (List.range n).filterMap fun i =>
+        let j := if i + 1 < n then i + 1 else 0
+        if hi : i < n then
+          if hj : j < n then
+            if i == j then none
+            else some (Gate.CNOT (Qubit.ofNat i hi) (Qubit.ofNat j hj))
+          else none
         else none
-      else none
   { gates := gatesRy ++ gatesRz ++ gatesCNOT }
 
 /--

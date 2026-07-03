@@ -142,6 +142,7 @@ Valor esperado de una PauliString sobre un StateVector.
 No modifica el estado (aplica y deshace rotaciones).
 -/
 def expectPauliString (sv : StateVector) (ps : PauliString) : Float :=
+  if ps.terms.any (fun t => t.qubit >= sv.numQubits) then 0.0 else
   -- 1. Aplicar rotaciones de base
   let (svRot, undosRev) :=
     ps.terms.foldl (fun ((cur : StateVector), (undos : List (StateVector -> StateVector))) (t : PauliTerm) =>

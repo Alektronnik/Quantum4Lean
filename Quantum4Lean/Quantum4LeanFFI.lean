@@ -1,6 +1,15 @@
 /-
 Quantum4LeanFFI.lean
-FFI a Quantum4LeanBridge.c via FloatArray (Lean 4.7.0 compatible).
+FFI a Quantum4LeanBridge.c via FloatArray (Lean 4.31.0 compatible).
+
+Las funciones `@[extern]` NO usan `IO` en su firma C; retornan tipos crudos.
+Se envuelven en `unsafe` + `pure` para producirlas en el contexto `IO`.
+
+Tipos FFI Lean -> C:
+  UInt32     -> uint32_t
+  UInt64     -> uint64_t
+  Float      -> double
+  FloatArray -> double*  (puntero crudo al array subyacente)
 
 El motor C++ opera in-place sobre FloatArray (double*).
 La memoria se gestiona desde Lean.
@@ -10,31 +19,59 @@ import Lean
 
 namespace Quantum4Lean.FFI
 
-def errorOK : Int := 0
+-- ===================================================================
+-- Capa cruda: @[extern] sin IO. unsafe en el llamador.
+-- ===================================================================
 
-/-- Inicializa motor: devuelve token (0 = error). --/
+-- Test minimo: verifica que FFI funciona
+@[extern "Quantum4LeanTestPing"]
+private opaque quantum4LeanTestPingRaw (x : UInt32) : UInt32
+
+def quantum4LeanTestPing (x : UInt32) : IO UInt32 :=
+  pure (unsafe quantum4LeanTestPingRaw x)
+
 @[extern "Quantum4LeanInit"]
-opaque quantum4LeanInit (numQubits : Int) (estado : FloatArray) (semilla : USize) : IO USize
+private opaque quantum4LeanInitRaw (numQubits : UInt32) (estado : FloatArray) (semilla : UInt64) : UInt64
 
-/-- Finaliza motor. --/
 @[extern "Quantum4LeanFinalize"]
-opaque quantum4LeanFinalize (token : USize) : IO Int
+private opaque quantum4LeanFinalizeRaw (token : UInt64) : UInt32
 
-/-- Memoria estimada para N qubits (bytes). --/
 @[extern "Quantum4LeanMemoryEstimate"]
-opaque quantum4LeanMemoryEstimate (numQubits : Int) : IO USize
+private opaque quantum4LeanMemoryEstimateRaw (numQubits : UInt32) : UInt64
 
-/-- Aplica puerta in-place sobre estado. --/
 @[extern "Quantum4LeanApplyGate"]
-opaque quantum4LeanApplyGate (token : USize) (tipo : Int) (qA qB : Int)
-                              (parametro : Float) (estado : FloatArray) : IO Int
+private opaque quantum4LeanApplyGateRaw (token : UInt64) (tipo : UInt32) (qA qB : UInt32)
+                              (parametro : Float) (estado : FloatArray) : UInt32
 
-/-- Mide qubit k. Devuelve bit (0 o 1). Estado colapsado in-place. --/
 @[extern "Quantum4LeanMeasure"]
-opaque quantum4LeanMeasure (token : USize) (qubitK : Int) (estado : FloatArray) : IO Int
+private opaque quantum4LeanMeasureRaw (token : UInt64) (qubitK : UInt32) (estado : FloatArray) : UInt32
 
-/-- Calcula probabilidades (requiere pre-alocar probs de tamano 2^N). --/
 @[extern "Quantum4LeanProbabilities"]
-opaque quantum4LeanProbabilities (token : USize) (estado : FloatArray) (probs : FloatArray) : IO Int
+private opaque quantum4LeanProbabilitiesRaw (token : UInt64) (estado : FloatArray) (probs : FloatArray) : UInt32
+
+-- ===================================================================
+-- Capa publica: envuelve unsafe en IO puro
+-- ===================================================================
+
+def errorOK : UInt32 := 0
+
+def quantum4LeanInit (numQubits : UInt32) (estado : FloatArray) (semilla : UInt64) : IO UInt64 :=
+  pure (unsafe quantum4LeanInitRaw numQubits estado semilla)
+
+def quantum4LeanFinalize (token : UInt64) : IO UInt32 :=
+  pure (unsafe quantum4LeanFinalizeRaw token)
+
+def quantum4LeanMemoryEstimate (numQubits : UInt32) : IO UInt64 :=
+  pure (unsafe quantum4LeanMemoryEstimateRaw numQubits)
+
+def quantum4LeanApplyGate (token : UInt64) (tipo : UInt32) (qA qB : UInt32)
+    (parametro : Float) (estado : FloatArray) : IO UInt32 :=
+  pure (unsafe quantum4LeanApplyGateRaw token tipo qA qB parametro estado)
+
+def quantum4LeanMeasure (token : UInt64) (qubitK : UInt32) (estado : FloatArray) : IO UInt32 :=
+  pure (unsafe quantum4LeanMeasureRaw token qubitK estado)
+
+def quantum4LeanProbabilities (token : UInt64) (estado : FloatArray) (probs : FloatArray) : IO UInt32 :=
+  pure (unsafe quantum4LeanProbabilitiesRaw token estado probs)
 
 end Quantum4Lean.FFI

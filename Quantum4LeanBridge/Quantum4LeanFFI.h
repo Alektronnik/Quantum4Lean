@@ -1,7 +1,7 @@
 /*
  * Quantum4LeanFFI.h
- * API C para Lean 4.7.0 (FloatArray). Sin Ptr.
- * Todas las funciones reciben/retornan tipos escalares o FloatArray.
+ * API C para Lean 4.31.0 (FloatArray, tipos crudos sin IO).
+ * Las funciones retornan tipos escalares; Lean las envuelve en IO via unsafe.
  */
 
 #ifndef QL4_FFI_V2_H
@@ -13,24 +13,13 @@
 extern "C" {
 #endif
 
-// Init: retorna token (0 = error). estado es FloatArray (double*).
-uint64_t Quantum4LeanInit(int numQubits, const double* estado, uint64_t semilla);
-
-// Finalize
-int Quantum4LeanFinalize(uint64_t token);
-
-// Memoria estimada (bytes)
-uint64_t Quantum4LeanMemoryEstimate(int numQubits);
-
-// Aplica puerta in-place
-int Quantum4LeanApplyGate(uint64_t token, int tipo, int qA, int qB,
-                           double parametro, double* estado);
-
-// Mide qubit k. Retorna bit (0/1) o -1 si error.
-int Quantum4LeanMeasure(uint64_t token, int qubitK, double* estado);
-
-// Probabilidades (probs pre-alocado size 2^N)
-int Quantum4LeanProbabilities(uint64_t token, const double* estado, double* probs);
+uint64_t Quantum4LeanInit(uint32_t numQubits, const double* estado, uint64_t semilla);
+uint32_t Quantum4LeanFinalize(uint64_t token);
+uint64_t Quantum4LeanMemoryEstimate(uint32_t numQubits);
+uint32_t Quantum4LeanApplyGate(uint64_t token, uint32_t tipo, uint32_t qA, uint32_t qB,
+                                double parametro, double* estado);
+uint32_t Quantum4LeanMeasure(uint64_t token, uint32_t qubitK, double* estado);
+uint32_t Quantum4LeanProbabilities(uint64_t token, const double* estado, double* probs);
 
 #ifdef __cplusplus
 }

@@ -56,7 +56,6 @@ Convierte una variable diofantina x (con b bits) a lista de PauliStrings.
 x = sum_j 2^j * (1 - Z_j)/2 = sum_j (2^j/2 * I - 2^j/2 * Z_j)
 -/
 private def varToPauli (bits : Nat) (startQ : Nat) : List PauliString :=
-  let idTerm : PauliString := { coefficient := 0.0, terms := [] }
   (List.range bits).foldl (fun (acc : List PauliString) (j : Nat) =>
     let coeff := pow2 j / 2.0
     let identPiece : PauliString := { coefficient := coeff, terms := [] }
@@ -68,33 +67,50 @@ private def varToPauli (bits : Nat) (startQ : Nat) : List PauliString :=
 /--
 Multiplica dos PauliStrings (producto tensorial, simplifica fases).
 Copia de pauliStringMul de Chemistry para evitar dependencia circular.
+Ahora con tracking exacto de fase compleja (signo + potencia de i mod 4).
 -/
 private def psMul (a b : PauliString) : PauliString :=
   let combined := a.terms ++ b.terms
-  -- Simplificar: fusionar qubits iguales
-  let rec simplify (ts : List PauliTerm) : Float × List PauliTerm :=
-    match ts with
-    | [] => (1.0, [])
-    | [t] => (1.0, [t])
-    | t1 :: t2 :: rest =>
-      if t1.qubit == t2.qubit then
-        match t1.pauli, t2.pauli with
-        | .X, .X => simplify rest
-        | .Y, .Y => simplify rest
-        | .Z, .Z => simplify ({ pauli := .I, qubit := t1.qubit } :: rest)
-        | .X, .Y => simplify ({ pauli := .Z, qubit := t1.qubit } :: rest)
-        | .Y, .X => simplify ({ pauli := .Z, qubit := t1.qubit } :: rest)
-        | .X, .Z => simplify ({ pauli := .Y, qubit := t1.qubit } :: rest)
-        | .Z, .X => simplify ({ pauli := .Y, qubit := t1.qubit } :: rest)
-        | .Y, .Z => simplify ({ pauli := .X, qubit := t1.qubit } :: rest)
-        | .Z, .Y => simplify ({ pauli := .X, qubit := t1.qubit } :: rest)
-        | _, _ => let (c, rest') := simplify (t2 :: rest); (c, t1 :: rest')
-      else
-        let (c, rest') := simplify (t2 :: rest); (c, t1 :: rest')
-    termination_by ts.length
-  let (phase, simplified) := simplify combined
-  { coefficient := a.coefficient * b.coefficient * phase
-  , terms := simplified.filter fun t => t.pauli ≠ .I }
+  -- Orden estable por qubit
+  let rec insertSorted (t : PauliTerm) : List PauliTerm -> List PauliTerm
+    | [] => [t]
+    | h :: rest =>
+      if t.qubit < h.qubit then t :: h :: rest
+      else h :: insertSorted t rest
+  let sorted := combined.foldl (fun acc t => insertSorted t acc) []
+  -- go: (sign, ipow, current, rest) -> ((sign, ipow), terms)
+  let rec go (sign : Float) (ipow : Nat) (current : Option PauliTerm) : List PauliTerm -> (Float × Nat) × List PauliTerm
+    | [] =>
+      match current with
+      | none => ((sign, ipow % 4), [])
+      | some t => ((sign, ipow % 4), [t])
+    | t :: rest =>
+      match current with
+      | none => go sign ipow (some t) rest
+      | some cur =>
+        if cur.qubit == t.qubit then
+          match cur.pauli, t.pauli with
+          | .I, p => go sign ipow (some { cur with pauli := p }) rest
+          | p, .I => go sign ipow (some { cur with pauli := p }) rest
+          | .X, .X => go sign ipow none rest
+          | .Y, .Y => go sign ipow none rest
+          | .Z, .Z => go sign ipow none rest
+          | .X, .Y => go sign (ipow + 1) (some { cur with pauli := .Z }) rest
+          | .Y, .X => go (-sign) (ipow + 1) (some { cur with pauli := .Z }) rest
+          | .Y, .Z => go sign (ipow + 1) (some { cur with pauli := .X }) rest
+          | .Z, .Y => go (-sign) (ipow + 1) (some { cur with pauli := .X }) rest
+          | .Z, .X => go sign (ipow + 1) (some { cur with pauli := .Y }) rest
+          | .X, .Z => go (-sign) (ipow + 1) (some { cur with pauli := .Y }) rest
+        else
+          let ((s, p), rest') := go sign ipow (some t) rest
+          ((s, p), cur :: rest')
+  let ((finalSign, finalIpow), terms) := go 1.0 0 none sorted
+  let coeff :=
+    if finalIpow == 0 then finalSign
+    else if finalIpow == 2 then -finalSign
+    else 0.0 -- Imaginario puro, se cancela en operador Hermitico
+  { coefficient := a.coefficient * b.coefficient * coeff
+  , terms := terms.filter fun t => t.pauli ≠ .I }
 
 /--
 Convierte ecuacion diofantina lineal a Observable via

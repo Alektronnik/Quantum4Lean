@@ -34,5 +34,25 @@ Ejecutable FFI (CPU-only): puente a motor C++ sin Metal.
   bash build_cpu_ffi.sh && lake build quantum4lean-ffi
 -/
 lean_exe «quantum4lean-ffi» where
-  root := `Quantum4LeanPlayground.QuantumPlaygroundFFI
-  moreLinkArgs := #["-L.", "-lQuantum4LeanCPU"]
+  root := `Quantum4LeanPlayground.QuantumPlaygroundFFICPU
+  moreLinkArgs := #[
+    "-L.", "-lQuantum4LeanCPU",
+    "-L", "/Users/bezalelizquierdoperez/.elan/toolchains/leanprover--lean4---v4.31.0/lib",
+    "-lgmp"
+  ]
+
+/--
+Ejecutable FFI (Metal GPU): puente a motor C++ con Metal en Apple Silicon.
+  bash build_metal_ffi.sh && LEAN_CC=clang lake build quantum4lean-ffi-metal
+Requiere LEAN_CC=clang para enlazar frameworks Apple.
+-/
+lean_exe «quantum4lean-ffi-metal» where
+  root := `Quantum4LeanPlayground.QuantumPlaygroundFFIMetal
+  -- Requiere LEAN_CC=clang. Necesita ruta a libgmp.a del toolchain Lean.
+  -- Ajusta la ruta si usas otra version de Lean.
+  moreLinkArgs := #[
+    "-L.", "-lQuantum4LeanMetal",
+    "-L", "/Users/bezalelizquierdoperez/.elan/toolchains/leanprover--lean4---v4.31.0/lib",
+    "-lgmp",
+    "-framework", "Metal", "-framework", "Foundation"
+  ]

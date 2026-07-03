@@ -1,8 +1,8 @@
 # Quantum4Lean
 
-Computacion cuantica verificada en Lean 4. Motor puro-Lean bit-exacto. Stack NISQ completo: StateVector, Observables, VQE adaptativo, QAOA, Density Matrix + ruido, Jordan-Wigner. DSL declarativo, exportador OpenQASM 3.0, Hodge decomposition + topologia discreta, tactica `circuit_equiv` y fuzzer intra-Lean. FFI CPU a motor C++ para hasta 30 qubits.
+Computacion cuantica verificada en Lean 4. Motor puro-Lean bit-exacto. Stack NISQ completo: StateVector, Observables, VQE adaptativo, QAOA, Density Matrix + ruido, Jordan-Wigner, quimica cuantica (H2 exacto), expansion polinomica a grado arbitrario, topologia discreta con Hodge y Betti, DSL declarativo, exportador OpenQASM 3.0 (incluye Gate.Unitary), tacticas de verificacion, fuzzer intra-Lean, puente FFI CPU y Metal GPU a motor C++ para hasta 30 qubits.
 
-Estado: v0.7.0 -- 23 modulos libreria, 7 playgrounds, 12 teoremas verificados, 208 tests fuzz.
+Estado: v0.8.0 -- 24 modulos libreria, 7 playgrounds, 12 teoremas verificados, 208+ tests.
 
 ## Build
 
@@ -16,13 +16,18 @@ Cero dependencias externas. Requiere Lean 4.31.0 (`lean-toolchain`).
 ## Arquitectura
 
 ```
-Quantum4Lean (23 modulos)
+Quantum4Lean (24 modulos)
   Core, Error, Engine, Fuzz, Unitary, Observable, VQE, QAOA,
   Diophantine, Polynomial, Solver, Simp, Transpile, Clifford,
-  Verify, DSL, Tactic, FFI, QASM, Density, Chemistry, Topology, Runner
+  Verify, DSL, Tactic, FFI, QASM, Density, Chemistry, Topology,
+  Ansatz, Runner
 
 Quantum4LeanPlayground (7 demos)
   Diophantine, Beal, Tijdeman, Riemann, TRDU, FFI, Mobius
+
+Quantum4LeanBridge (puente C)
+  Quantum4LeanFFI.c/.h  -- API C estable para FFI
+build_*.sh              -- Scripts de compilacion CPU/Metal
 ```
 
 ## Uso rapido
@@ -62,14 +67,18 @@ example : circuitsEquiv
 | Expectacion | `expect`, `expectPauliString`, `expectZ`, `expectX`, `expectY` |
 | VQE | `vqe`, `adamVQE`, `isingAnsatz`, `gradient`, `parameterShiftGradient` |
 | QAOA | `qaoaIsing`, `qaoaIsingCircuit`, `qaoaMixingLayer` |
-| Verificacion | `compile`, `circuitsEquiv`, `circuit_equiv` (tactica) |
+| Verificacion | `compile`, `compileSafe`, `validateCircuit`, `circuitsEquiv`, `circuitsEquivSafe`, `circuit_equiv` (tactica) |
 | Clifford | `cliffordEquiv`, `CliffordAmplitude`, `CliffordMatrix` |
-| Optimizacion | `simplifyCircuit`, `optimizeCircuit`, `verifyOptimization` |
+| Optimizacion | `simplifyCircuit`, `optimizeCircuit`, `verifyOptimization`, `quantumEquivCheck` |
 | DSL | `circuit! { ... }`, `q[i]`, `H`, `X`, `CNOT`, ... (Shortcuts) |
 | Fuzzer circuitos | `FuzzConfig`, `FuzzReport`, `runFullSuite` |
 | Fuzzer diofantino | `DiophantineFuzz.generateWithSolution`, `runFuzz`, `report` |
 | Diofantico | `Diophantine`, `toIsing`, `diophantineSolve`, `checkSolution` |
-| Polinomico | `Monomial`, `PolyEquation`, `polyToIsing`, `expandVarPower` |
+| Polinomico | `Monomial`, `PolyEquation`, `polyToIsing`, `expandVarPower` (grado arbitrario) |
+| Quimica | `h2ExactObservable`, `h2Observable`, `lihObservable`, `fermionToObservable` |
+| Topologia | `harmonicProjector`, `bettiNumber`, `FirmaPrima`, `topologicalKappa` |
+| FFI | `quantum4LeanInit`, `quantum4LeanApplyGate`, `quantum4LeanMeasure` |
+| QASM | `circuitToQASM`, `exportCircuit`, `printCircuit` (soporta Gate.Unitary) |
 
 ## DSL
 
@@ -138,8 +147,9 @@ let result := diophantineSolve eq 4
 
 ## Traductor Polinomico
 
-Generaliza el traductor lineal a monomios con exponentes <= 3.
-Soporta ecuaciones como x^2 = y^3 + 1 (Tijdeman).
+Expansion polinomica a cualquier grado n. Representacion Z-mask con XOR para Z*Z=I.
+Generaliza el traductor lineal a monomios multivariados.
+Soporta ecuaciones como x^2 = y^3 + 1 (Tijdeman), x^3 + y^3 = z^3 (Fermat n=3), etc.
 
 ```lean
 import Quantum4Lean
@@ -157,6 +167,34 @@ let eq : PolyEquation := {
 let H := polyToIsing eq    -- Observable Ising
 let n := polyTotalQubits eq -- 8 qubits
 ```
+
+## FFI: Puente C++/Metal (Apple Silicon)
+
+Motor externo con GPU acceleration via Metal 3. Hasta 30 qubits.
+Dos variantes: CPU-only (sin dependencias Metal) y Metal GPU (Apple Silicon).
+
+```bash
+# CPU-only
+bash build_cpu_ffi.sh && lake build quantum4lean-ffi
+.lake/build/bin/quantum4lean-ffi
+
+# Metal GPU (requiere LEAN_CC=clang)
+bash build_metal_ffi.sh && LEAN_CC=clang lake build quantum4lean-ffi-metal
+.lake/build/bin/quantum4lean-ffi-metal
+```
+
+```lean
+import Quantum4Lean.Quantum4LeanFFI
+open Quantum4Lean.FFI
+
+-- 20 qubits: H a todos, medir
+let (token, estado) <- ffiInit 20
+ffiGate token estado HADAMARD 0 0
+let bit <- ffiMeasure token estado 0
+fiFinalize token
+```
+
+Arquitectura FFI: Lean (`@[extern]` + `unsafe`) → C bridge (`Quantum4LeanFFI.c`) → Motor C++ (`QuantumKitCore.mm`) con JIT Metal embebido. Zero-copy via `FloatArray` (double*).
 
 ## Playground
 

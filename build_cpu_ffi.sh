@@ -17,6 +17,7 @@ QUANTUMKIT_DIR="$SCRIPT_DIR/../QuantumKit"
 BRIDGE_DIR="$SCRIPT_DIR/Quantum4LeanBridge"
 ENGINE_DIR="$QUANTUMKIT_DIR/Sources/QuantumKitCore"
 OUTPUT="$SCRIPT_DIR/libQuantum4LeanCPU.a"
+TMPDIR="${TMPDIR:-/tmp}"
 
 echo "=== Compilando Quantum4Lean FFI Bridge (CPU-only) ==="
 
@@ -24,7 +25,7 @@ echo "[1/3] Compilando motor C++ (CPU, sin ObjC/Metal)..."
 clang++ -c -O3 -std=c++17 -x c++ \
   -I"$ENGINE_DIR/include" \
   "$ENGINE_DIR/engine/QuantumKitCore.mm" \
-  -o /tmp/ql4_engine_cpu.o
+  -o "$TMPDIR/ql4_engine_cpu.o"
 
 echo "[2/3] Compilando puente C..."
 clang -c -O3 \
@@ -32,11 +33,11 @@ clang -c -O3 \
   -I"$BRIDGE_DIR" \
   -I"$ENGINE_DIR/include" \
   "$BRIDGE_DIR/Quantum4LeanFFI.c" \
-  -o /tmp/ql4_bridge_cpu.o
+  -o "$TMPDIR/ql4_bridge_cpu.o"
 
 echo "[3/3] Creando libreria estatica..."
-ar rcs "$OUTPUT" /tmp/ql4_bridge_cpu.o /tmp/ql4_engine_cpu.o
-rm -f /tmp/ql4_bridge_cpu.o /tmp/ql4_engine_cpu.o
+ar rcs "$OUTPUT" "$TMPDIR/ql4_bridge_cpu.o" "$TMPDIR/ql4_engine_cpu.o"
+rm -f "$TMPDIR/ql4_bridge_cpu.o" "$TMPDIR/ql4_engine_cpu.o"
 
 echo "=== FFI CPU lib creada: $OUTPUT ==="
 ls -lh "$OUTPUT"
