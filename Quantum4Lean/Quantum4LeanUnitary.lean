@@ -223,7 +223,10 @@ private def gateMatrix {n : Nat} (g : Gate n) : UnitaryMatrix n :=
   | .RX q theta => expand1Q (gateRX theta) q.idx.val
   | .RY q theta => expand1Q (gateRY theta) q.idx.val
   | .RZ q theta => expand1Q (gateRZ theta) q.idx.val
-  | .Unitary _ _ => UnitaryMatrix.identity n
+  | .Unitary q matrix =>
+    let m : List Complex := [mkC (matrix.get! 0) (matrix.get! 1), mkC (matrix.get! 2) (matrix.get! 3),
+                             mkC (matrix.get! 4) (matrix.get! 5), mkC (matrix.get! 6) (matrix.get! 7)]
+    expand1Q m q.idx.val
 
 -- ===================================================================
 -- Compilacion y verificacion semantica

@@ -38,6 +38,14 @@ namespace Quantum4Lean.Playground.Riemann
 -- Primos y gaps
 -- ===================================================================
 
+/-- Raiz cuadrada entera (Nat.sqrt no existe en Lean 4.7.0). --/
+private def natSqrt (n : Nat) : Nat :=
+  if n <= 1 then n else
+    let rec go (x : Nat) : Nat :=
+      let x' := (x + n / x) / 2
+      if x' < x then go x' else x
+    go (n / 2)
+
 /-- Criba simple: primeros n primos. --/
 partial def primes (n : Nat) : List Nat :=
   if n = 0 then []
@@ -45,7 +53,7 @@ partial def primes (n : Nat) : List Nat :=
     let rec go (k : Nat) (acc : List Nat) : List Nat :=
       if acc.length >= n then acc.reverse
       else
-        let limit := Nat.sqrt k
+        let limit := natSqrt k
         let isPrime := ¬(acc.any fun p => if p > limit then false else k % p == 0)
         if isPrime then go (k + 1) (k :: acc)
         else go (k + 1) acc
