@@ -77,6 +77,7 @@ Aplica puerta 1-qubit (matriz 2x2, 8 floats) sobre qubit k.
 rho -> U_k rho U_k^dagger.
 -/
 private def apply1Q (rho : DensityMatrix n) (k : Nat) (g : Array Float) : DensityMatrix n :=
+  if g.size ≠ 8 then rho else
   let d := rho.dim
   let mask := 1 <<< k
   let g00r := g[0]!; let g00i := g[1]!
@@ -140,6 +141,7 @@ def applyGate (rho : DensityMatrix n) (gate : Gate n) : DensityMatrix n :=
   | .Unitary q m => apply1Q rho (k q) m
   | .CNOT c t =>
     let kc := k c; let kt := k t
+    if kc == kt then rho else
     let maskT := 1 <<< kt
     let d := rho.dim
     let result : DensityMatrix n :=
@@ -148,7 +150,7 @@ def applyGate (rho : DensityMatrix n) (gate : Gate n) : DensityMatrix n :=
     (List.range d).foldl (fun (m : DensityMatrix n) (i : Nat) =>
       let ci := (i >>> kc) &&& 1
       (List.range d).foldl (fun (m2 : DensityMatrix n) (j : Nat) =>
-        let cj := (j >>> kt) &&& 1
+        let cj := (j >>> kc) &&& 1
         let i2 := i ^^^ (ci * maskT)
         let j2 := j ^^^ (cj * maskT)
         let (re, im) := get rho i2 j2
@@ -196,6 +198,7 @@ def runCircuit (rho : DensityMatrix n) (circuit : Circuit n) : DensityMatrix n :
 -- ===================================================================
 
 def depolarize (rho : DensityMatrix n) (p : Float) : DensityMatrix n :=
+  let p := if p < 0.0 then 0.0 else if p > 1.0 then 1.0 else p
   let d := rho.dim
   let factor := p / d.toFloat
   let scaledData := rho.data.map fun x => (1.0 - p) * x
@@ -206,6 +209,7 @@ def depolarize (rho : DensityMatrix n) (p : Float) : DensityMatrix n :=
   ) result
 
 def amplitudeDamping (rho : DensityMatrix n) (k : Nat) (gamma : Float) : DensityMatrix n :=
+  let gamma := if gamma < 0.0 then 0.0 else if gamma > 1.0 then 1.0 else gamma
   let d := rho.dim
   let mask := 1 <<< k
   let sqrt1mG := Float.sqrt (1.0 - gamma)
@@ -229,8 +233,9 @@ def amplitudeDamping (rho : DensityMatrix n) (k : Nat) (gamma : Float) : Density
   ) result
 
 def phaseDamping (rho : DensityMatrix n) (k : Nat) (lambda : Float) : DensityMatrix n :=
+  let lambda := if lambda < 0.0 then 0.0 else if lambda > 1.0 then 1.0 else lambda
   let d := rho.dim
-  let factor := 1.0 - 2.0 * lambda
+  let factor := 1.0 - lambda
   (List.range d).foldl (fun (m : DensityMatrix n) (i : Nat) =>
     (List.range d).foldl (fun (m2 : DensityMatrix n) (j : Nat) =>
       let bi := (i >>> k) &&& 1; let bj := (j >>> k) &&& 1
@@ -259,9 +264,10 @@ Fase por termino Pauli sobre qubit q en estado |b>:
 -/
 def expect (rho : DensityMatrix n) (obs : Observable) : Float :=
   obs.strings.foldl (fun (acc : Float) (ps : PauliString) =>
+    if ps.terms.any (fun t => t.qubit >= rho.numQubits) then acc else
     let mask := ps.terms.foldl (fun (m : Nat) (t : PauliTerm) =>
       match t.pauli with
-      | .X | .Y => m ||| (1 <<< t.qubit)
+      | .X | .Y => m ^^^ (1 <<< t.qubit)
       | _ => m
     ) 0
     let d := rho.dim

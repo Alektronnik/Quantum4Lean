@@ -9,7 +9,7 @@ Modulos activos:
   Quantum4LeanError       QuantumError (inductivo)
   Quantum4LeanEngine      StateVector, simulador bit-exacto
   Quantum4LeanFuzz        Fuzzer intra-Lean
-  Quantum4LeanUnitary     Complex, UnitaryMatrix, circuitsEquiv
+  Quantum4LeanUnitary     Complex, UnitaryMatrix, validateCircuit, compile, compileSafe, circuitsEquiv, circuitsEquivSafe
   Quantum4LeanObservable  PauliString, Observable, expect
   Quantum4LeanVQE         Parameter-shift, gradient, VQE
   Quantum4LeanDSL         Macro circuit!, q[i], Shortcuts
@@ -50,7 +50,7 @@ import Quantum4Lean.Quantum4LeanAnsatz
 export Quantum4Lean (Qubit Gate Circuit StateVector
   executeSim executeSimProbs
   FuzzConfig FuzzReport runFullSuite reportToString
-  Complex UnitaryMatrix compile circuitsEquiv
+  Complex UnitaryMatrix validateCircuit compile compileSafe circuitsEquiv circuitsEquivSafe
   CliffordAmplitude CliffordMatrix compileClifford cliffordEquiv
   Pauli PauliString Observable
   expect expectPauliString expectZ expectX expectY

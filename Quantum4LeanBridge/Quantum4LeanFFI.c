@@ -2,26 +2,32 @@
 #include "Quantum4LeanFFI.h"
 #include "QuantumKitCore.h"
 
-uint64_t Quantum4LeanInit(int numQubits, const double* estado, uint64_t semilla) {
+// Funcion de prueba minima: retorna 42
+uint32_t Quantum4LeanTestPing(uint32_t x) {
+    return x + 42;
+}
+
+uint64_t Quantum4LeanInit(uint32_t numQubits, const double* estado, uint64_t semilla) {
     uint64_t token = 0;
-    int err = qu4trix_iniciar(numQubits, (double*)estado, semilla, &token);
+    int err = qu4trix_iniciar((int)numQubits, (double*)estado, semilla, &token);
     return (err == 0) ? token : 0;
 }
-int Quantum4LeanFinalize(uint64_t token) {
-    return qu4trix_finalizar(token);
+uint32_t Quantum4LeanFinalize(uint64_t token) {
+    return (uint32_t)qu4trix_finalizar(token);
 }
-uint64_t Quantum4LeanMemoryEstimate(int numQubits) {
-    return qu4trix_memoria_estimada(numQubits);
+uint64_t Quantum4LeanMemoryEstimate(uint32_t numQubits) {
+    return qu4trix_memoria_estimada((int)numQubits);
 }
-int Quantum4LeanApplyGate(uint64_t token, int tipo, int qA, int qB,
-                           double parametro, double* estado) {
-    return qu4trix_aplicar_puerta(token, tipo, qA, qB, parametro, NULL, estado, NULL);
+uint32_t Quantum4LeanApplyGate(uint64_t token, uint32_t tipo, uint32_t qA, uint32_t qB,
+                                double parametro, double* estado) {
+    return (uint32_t)qu4trix_aplicar_puerta(token, (int)tipo, (int)qA, (int)qB,
+                                            parametro, NULL, estado, NULL);
 }
-int Quantum4LeanMeasure(uint64_t token, int qubitK, double* estado) {
+uint32_t Quantum4LeanMeasure(uint64_t token, uint32_t qubitK, double* estado) {
     int bit = 0;
-    int err = qu4trix_medir(token, qubitK, estado, &bit);
-    return (err == 0) ? bit : -1;
+    int err = qu4trix_medir(token, (int)qubitK, estado, &bit);
+    return (err == 0) ? (uint32_t)bit : 0xFFFFFFFFu;
 }
-int Quantum4LeanProbabilities(uint64_t token, const double* estado, double* probs) {
-    return qu4trix_probabilidades(token, estado, probs);
+uint32_t Quantum4LeanProbabilities(uint64_t token, const double* estado, double* probs) {
+    return (uint32_t)qu4trix_probabilidades(token, estado, probs);
 }

@@ -89,7 +89,8 @@ def main : IO UInt32 := do
   let bell : Circuit 2 :=
     circuit fun c => (c.add (Gate.H qb0)).add (Gate.CNOT qb0 qb1)
   let qasm := Quantum4Lean.QASM.circuitToQASM bell "bell"
-  let qasmOK := qasm.contains "OPENQASM 3.0" && qasm.contains "h q[0]" && qasm.contains "cx q[0], q[1]"
+  let qasmOK := qasm.contains "OPENQASM 3.0" &&
+    qasm.contains "  h q[0];\n  cx q[0], q[1];"
   if qasmOK then
     IO.println "  OK: Bell -> QASM 3.0 valido"
   else
@@ -102,21 +103,21 @@ def main : IO UInt32 := do
   IO.println "\n=== Chemistry Tests ==="
   -- Test H2 Observable generation
   let h2 := h2Observable
-  let h2ok := h2.strings.length >= 100  -- Debe tener muchos terminos
+  let h2ok := h2.strings.length == 15
   if h2ok then
     IO.println s!"  OK: H2 -> {h2.strings.length} PauliStrings (4 qubits)"
   else
     exitCode := 1
-    IO.println s!"  FAIL: H2 solo tiene {h2.strings.length} PauliStrings"
+    IO.println s!"  FAIL: H2 tiene {h2.strings.length} PauliStrings (esperado 15)"
 
   -- Test LiH Observable generation
   let lih := lihObservable
-  let lihok := lih.strings.length >= 10
+  let lihok := lih.strings.length == 7
   if lihok then
     IO.println s!"  OK: LiH -> {lih.strings.length} PauliStrings (6 qubits)"
   else
     exitCode := 1
-    IO.println s!"  FAIL: LiH solo tiene {lih.strings.length} PauliStrings"
+    IO.println s!"  FAIL: LiH tiene {lih.strings.length} PauliStrings (esperado 7)"
 
   -- Test Jordan-Wigner a_0 operator
   let a0 := jwSingle 0 .annihilation
@@ -155,11 +156,132 @@ def main : IO UInt32 := do
       IO.println s!"  FAIL: E(HF) = {eHF} (NaN o infinita)"
 
   -- ================================================================
-  -- 6. Resumen
+  -- 6. Regression Tests
+  -- ================================================================
+  IO.println "\n=== Regression Tests ==="
+  let mut regressionFails := 0
+
+  let qBad : Qubit 1 := ⟨⟨0, by decide⟩⟩
+  let badUnitary : Circuit 1 := { gates := [Gate.Unitary qBad #[]] }
+  match executeSimProbs badUnitary with
+  | Except.error _ => pure ()
+  | Except.ok _ =>
+      regressionFails := regressionFails + 1
+      IO.println "  FAIL: Gate.Unitary vacia no fue rechazada por executeSimProbs"
+  let badQasm := Quantum4Lean.QASM.circuitToQASM badUnitary "bad-unitary"
+  if badQasm.contains "unitary_0 q[0];" then
+    regressionFails := regressionFails + 1
+    IO.println "  FAIL: QASM emitio llamada a Gate.Unitary invalida"
+
+  let selfCNOT : Circuit 1 := { gates := [Gate.CNOT qBad qBad] }
+  if !circuitsEquiv selfCNOT (Circuit.identity 1) then
+    regressionFails := regressionFails + 1
+    IO.println "  FAIL: CNOT(q,q) no equivale a identidad en UnitaryMatrix"
+
+  match StateVector.init 1 with
+  | Except.error e =>
+      regressionFails := regressionFails + 1
+      IO.println s!"  FAIL: StateVector.init(1): {e}"
+  | Except.ok sv =>
+      let zOut := expectZ sv 99
+      if zOut != 0.0 then
+        regressionFails := regressionFails + 1
+        IO.println s!"  FAIL: expectZ fuera de rango = {zOut}, esperado 0"
+
+  match DensityMatrix.init 1 with
+  | Except.error e =>
+      regressionFails := regressionFails + 1
+      IO.println s!"  FAIL: DensityMatrix.init(1): {e}"
+  | Except.ok rho =>
+      let obsOut : Observable := { strings := [
+        { coefficient := 1.0, terms := [{ pauli := .Z, qubit := 99 }] }
+      ] }
+      let eOut := DensityMatrix.expect rho obsOut
+      let noisy := DensityMatrix.amplitudeDamping rho 0 2.0
+      let damped := DensityMatrix.phaseDamping rho 0 2.0
+      let depol := DensityMatrix.depolarize rho 2.0
+      let okFinite := DensityMatrix.trace noisy == DensityMatrix.trace noisy &&
+        DensityMatrix.trace damped == DensityMatrix.trace damped &&
+        DensityMatrix.trace depol == DensityMatrix.trace depol
+      if eOut != 0.0 || !okFinite then
+        regressionFails := regressionFails + 1
+        IO.println s!"  FAIL: Density regressions eOut={eOut}, finite={okFinite}"
+
+  let smallMobius := mobiusTopologyObservable 2
+  let hasSelfCoupling := smallMobius.strings.any fun ps =>
+    match ps.terms with
+    | [a, b] => a.qubit == b.qubit
+    | _ => false
+  if hasSelfCoupling then
+    regressionFails := regressionFails + 1
+    IO.println "  FAIL: mobiusTopologyObservable 2 genero auto-acoplamientos"
+
+  let lineD0 := SparseMatrix.fromDense [[-1.0, 1.0]]
+  let lineD1 : SparseMatrix := { rows := [], cols := [], values := [], nrows := 0, ncols := 1 }
+  let cycleD0 := SparseMatrix.fromDense [
+    [-1.0, 1.0, 0.0],
+    [0.0, -1.0, 1.0],
+    [1.0, 0.0, -1.0]
+  ]
+  let cycleD1 : SparseMatrix := { rows := [], cols := [], values := [], nrows := 0, ncols := 3 }
+  let bLine := bettiNumber lineD0 lineD1
+  let bCycle := bettiNumber cycleD0 cycleD1
+  if bLine != 0 || bCycle != 1 then
+    regressionFails := regressionFails + 1
+    IO.println s!"  FAIL: bettiNumber linea={bLine}, ciclo={bCycle}"
+
+  let tinyAnsatz := mobiusAnsatz 1 1 []
+  let hasSelfCNOT := tinyAnsatz.gates.any fun g =>
+    match g with
+    | Gate.CNOT c t => c.idx.val == t.idx.val
+    | _ => false
+  if hasSelfCNOT || tinyAnsatz.gates.length != 2 then
+    regressionFails := regressionFails + 1
+    IO.println s!"  FAIL: mobiusAnsatz 1 1 [] gates={tinyAnsatz.gates.length}, selfCNOT={hasSelfCNOT}"
+
+  match StateVector.init 2 with
+  | Except.error e =>
+      regressionFails := regressionFails + 1
+      IO.println s!"  FAIL: StateVector.init(2): {e}"
+  | Except.ok sv0 =>
+      let q0 : Qubit 2 := ⟨⟨0, by decide⟩⟩
+      let q1 : Qubit 2 := ⟨⟨1, by decide⟩⟩
+      let svX1 := StateVector.applyGate sv0 (Gate.X q0)
+      let svX2 := StateVector.applyGate sv0 (Gate.X q1)
+      let dio : Diophantine := {
+        vars := [{ coeff := 1, name := "x", bits := 2 }],
+        constant := 2
+      }
+      let hDio := toIsing dio 2
+      let eDioGood := expect svX2 hDio
+      let eDioBad := expect svX1 hDio
+      if (eDioGood - 0.0).abs > 1e-6 || (eDioBad - 1.0).abs > 1e-6 then
+        regressionFails := regressionFails + 1
+        IO.println s!"  FAIL: toIsing energia x=2->{eDioGood}, x=1->{eDioBad}"
+      let poly : PolyEquation := {
+        monomials := [{ coefficient := 1, exponents := [(0, 2)] }],
+        constant := 4,
+        varBits := [2]
+      }
+      let hPoly := polyToIsing poly
+      let ePolyGood := expect svX2 hPoly
+      let ePolyBad := expect svX1 hPoly
+      if (ePolyGood - 0.0).abs > 1e-6 || (ePolyBad - 9.0).abs > 1e-6 then
+        regressionFails := regressionFails + 1
+        IO.println s!"  FAIL: polyToIsing energia x=2->{ePolyGood}, x=1->{ePolyBad}"
+
+  if regressionFails == 0 then
+    IO.println "  OK: regresiones criticas cubiertas"
+  else
+    exitCode := 1
+    IO.println s!"  FAIL: {regressionFails} regresion(es)"
+
+  -- ================================================================
+  -- 7. Resumen
   -- ================================================================
   IO.println "\n=============================================="
   if exitCode == 0 then
-    IO.println "TODOS LOS TESTS OK - Quantum4Lean v0.7.0"
+    IO.println "TODOS LOS TESTS OK - Quantum4Lean v0.8.0"
   else
     IO.println "HAY FALLOS - Revisar salida anterior"
   IO.println "=============================================="

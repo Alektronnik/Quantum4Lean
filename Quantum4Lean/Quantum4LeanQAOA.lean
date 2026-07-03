@@ -68,6 +68,14 @@ def qaoaIsingCostLayer (numQubits : Nat) (gamma : Float)
     else none
   { gates := gatesZZ ++ gatesZ }
 
+private def qaoaIsingObservable (numQubits : Nat) (jCoupling : Float) (hField : Float) : Observable :=
+  let pairs := List.range (numQubits - 1) |>.map fun i =>
+    PauliString.mk (-jCoupling)
+      [PauliTerm.mk .Z i, PauliTerm.mk .Z (i+1)]
+  let fields := List.range numQubits |>.map fun i =>
+    PauliString.mk (-hField) [PauliTerm.mk .Z i]
+  { strings := pairs ++ fields }
+
 /--
 Circuito QAOA completo para Ising de p capas.
 
@@ -111,7 +119,7 @@ Devuelve (energia final, parametros optimos, historial).
 -/
 def qaoaIsing (numQubits : Nat) (p : Nat) (jCoupling : Float) (hField : Float)
     (learningRate : Float := 0.05) (maxIter : Nat := 100) : Float × List Float × List Float :=
-  let obs := Observable.ising1D numQubits jCoupling hField
+  let obs := qaoaIsingObservable numQubits jCoupling hField
   let circuit := qaoaIsingCircuit numQubits p jCoupling hField
   let initialParams := List.replicate (2 * p) 0.1
   vqe circuit obs initialParams learningRate maxIter

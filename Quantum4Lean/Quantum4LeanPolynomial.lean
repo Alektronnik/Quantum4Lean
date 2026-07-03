@@ -2,7 +2,8 @@
 Quantum4LeanPolynomial.lean
 Traductor polinomico generalizado: monomios multivariados -> Ising.
 
-Soporta exponentes ≤ 3 (cubre Tijdeman, Pillai, Fermat-Catalan).
+Soporta cualquier exponente n (genera x^n via expansion iterativa Z-mask).
+Cubre Tijdeman, Pillai, Fermat-Catalan, Beal y generalizaciones.
 Build autocontenido. Lean 4.7.0.
 -/
 
@@ -49,6 +50,30 @@ private def qubitOffsets (varBits : List Nat) : List Nat :=
 
 private def identTerm : PauliString := PauliString.mk 1.0 []
 
+/--
+Representacion Z-mask: (coeficiente, mask) donde mask es un bitmask
+de qubits con operador Z. Z*Z = I se implementa como XOR de masks.
+-/
+private def zmToPauli (startQ : Nat) (bits : Nat) (coeff : Float) (mask : Nat) : PauliString :=
+  let terms := (List.range bits).filterMap fun j =>
+    if ((mask >>> j) &&& 1) == 1 then
+      some (PauliTerm.mk .Z (startQ + j))
+    else none
+  { coefficient := coeff, terms := terms }
+
+/--
+Reduce una lista de (coeff, mask) fusionando masks identicas.
+-/
+private def mergeZM (acc : List (Float × Nat)) (coeff : Float) (mask : Nat) : List (Float × Nat) :=
+  match acc with
+  | [] => [(coeff, mask)]
+  | (c, m) :: rest =>
+    if m == mask then (c + coeff, m) :: rest
+    else (c, m) :: mergeZM rest coeff mask
+
+/--
+Expande x^1 = sum_j 2^{j-1} * (I - Z_j) como lista de PauliStrings.
+-/
 private def expandLinear (startQ : Nat) (bits : Nat) : List PauliString :=
   let constPart := (pow2 bits - 1.0) / 2.0
   let idStr := PauliString.mk constPart []
@@ -57,86 +82,33 @@ private def expandLinear (startQ : Nat) (bits : Nat) : List PauliString :=
   ) (List.range bits)
   idStr :: zStrs
 
-private def expandQuadratic (startQ : Nat) (bits : Nat) : List PauliString :=
-  let half : Float := 0.5
-  let quarter : Float := 0.25
-  let diagI := List.foldl (fun acc j => acc + pow2 (2*j) * half) 0.0 (List.range bits)
-  let diagZ := List.map (fun j =>
-    PauliString.mk (-pow2 (2*j) * half) [PauliTerm.mk .Z (startQ + j)]
-  ) (List.range bits)
-  let offVals : List Float := listBind (List.range bits) (fun j =>
-    List.map (fun k => quarter * 2.0 * pow2 (j + k))
-      (List.filter (fun k => j < k) (List.range bits)))
-  let offI := List.foldl (fun acc x => acc + x) 0.0 offVals
-  let offZ : List PauliString := listBind (List.range bits) (fun j =>
-    listBind (List.filter (fun k => j < k) (List.range bits)) (fun k =>
-      let c := half * pow2 (j + k)
-      [PauliString.mk (-c) [PauliTerm.mk .Z (startQ + j)], PauliString.mk (-c) [PauliTerm.mk .Z (startQ + k)]]))
-  let offZZ : List PauliString := listBind (List.range bits) (fun j =>
-    List.map (fun k =>
-      PauliString.mk (half * pow2 (j + k)) [PauliTerm.mk .Z (startQ + j), PauliTerm.mk .Z (startQ + k)]
-    ) (List.filter (fun k => j < k) (List.range bits)))
-  let totalI := diagI + offI
-  (PauliString.mk totalI []) :: (diagZ ++ offZ ++ offZZ)
-
-private def expandCubic (startQ : Nat) (bits : Nat) : List PauliString :=
-  let eighth : Float := 0.125
-  let quarter : Float := 0.25
-  let half : Float := 0.5
-  let diagI := List.foldl (fun acc j => acc + pow2 (3*j) * half) 0.0 (List.range bits)
-  let diagZ := List.map (fun j =>
-    PauliString.mk (-pow2 (3*j) * half) [PauliTerm.mk .Z (startQ + j)]
-  ) (List.range bits)
-  -- pair
-  let pairVals : List Float := listBind (List.range bits) (fun j =>
-    List.map (fun l => 3.0 * pow2 (2*j + l) * eighth)
-      (List.filter (fun l => j ≠ l) (List.range bits)))
-  let pairI := List.foldl (fun acc x => acc + x) 0.0 pairVals
-  let pairZ : List PauliString := listBind (List.range bits) (fun j =>
-    listBind (List.filter (fun l => j ≠ l) (List.range bits)) (fun l =>
-      let c := 3.0 * pow2 (2*j + l) * quarter
-      [PauliString.mk (-c) [PauliTerm.mk .Z (startQ + j)], PauliString.mk (-c) [PauliTerm.mk .Z (startQ + l)]]))
-  let pairZZ : List PauliString := listBind (List.range bits) (fun j =>
-    List.map (fun l =>
-      PauliString.mk (3.0 * pow2 (2*j + l) * quarter)
-        [PauliTerm.mk .Z (startQ + j), PauliTerm.mk .Z (startQ + l)]
-    ) (List.filter (fun l => j ≠ l) (List.range bits)))
-  -- triple
-  let tripleVals : List Float := listBind (List.range bits) (fun j =>
-    listBind (List.range bits) (fun k =>
-      List.map (fun l => 6.0 * pow2 (j + k + l) * eighth)
-        (List.filter (fun l => j < k && k < l) (List.range bits))))
-  let tripleI := List.foldl (fun acc x => acc + x) 0.0 tripleVals
-  let tripleZ : List PauliString := listBind (List.range bits) (fun j =>
-    listBind (List.range bits) (fun k =>
-      listBind (List.filter (fun l => j < k && k < l) (List.range bits)) (fun l =>
-        let c := 6.0 * pow2 (j + k + l) * eighth
-        [PauliString.mk (-c) [PauliTerm.mk .Z (startQ + j)],
-         PauliString.mk (-c) [PauliTerm.mk .Z (startQ + k)],
-         PauliString.mk (-c) [PauliTerm.mk .Z (startQ + l)]])))
-  let tripleZZ : List PauliString := listBind (List.range bits) (fun j =>
-    listBind (List.range bits) (fun k =>
-      listBind (List.filter (fun l => j < k && k < l) (List.range bits)) (fun l =>
-        let c := 6.0 * pow2 (j + k + l) * quarter
-        [PauliString.mk c [PauliTerm.mk .Z (startQ + j), PauliTerm.mk .Z (startQ + k)],
-         PauliString.mk c [PauliTerm.mk .Z (startQ + j), PauliTerm.mk .Z (startQ + l)],
-         PauliString.mk c [PauliTerm.mk .Z (startQ + k), PauliTerm.mk .Z (startQ + l)]])))
-  let tripleZZZ : List PauliString := listBind (List.range bits) (fun j =>
-    listBind (List.range bits) (fun k =>
-      List.map (fun l =>
-        PauliString.mk (-6.0 * pow2 (j + k + l) * eighth)
-          [PauliTerm.mk .Z (startQ + j), PauliTerm.mk .Z (startQ + k), PauliTerm.mk .Z (startQ + l)]
-      ) (List.filter (fun l => j < k && k < l) (List.range bits))))
-  let totalI := diagI + pairI + tripleI
-  (PauliString.mk totalI []) :: (diagZ ++ pairZ ++ tripleZ ++ pairZZ ++ tripleZZ ++ tripleZZZ)
-
+/--
+Expande x^n para x = sum_j 2^j * (1-Z_j)/2, con b bits.
+Algoritmo: multiplicacion iterativa en representacion Z-mask.
+Z*Z = I via XOR de masks. Complejidad O(2^b * n).
+-/
 def expandVarPower (startQ : Nat) (bits : Nat) (exponent : Nat) : List PauliString :=
-  match exponent with
-  | 0 => [identTerm]
-  | 1 => expandLinear startQ bits
-  | 2 => expandQuadratic startQ bits
-  | 3 => expandCubic startQ bits
-  | _ => []
+  if exponent == 0 then
+    [identTerm]
+  else if exponent == 1 then
+    expandLinear startQ bits
+  else
+    -- Base: x = sum_{j=0}^{b-1} 2^{j-1} * I  +  (-2^{j-1}) * Z_j
+    let base : List (Float × Nat) :=
+      listBind (List.range bits) fun j =>
+        let c := pow2 j / 2.0
+        [(c, 0), (-c, 1 <<< j)]
+    -- Potenciacion: x^(k+1) = x^k * x, multiplicando masks con XOR
+    let rec pow (k : Nat) (current : List (Float × Nat)) : List (Float × Nat) :=
+      if k >= exponent then current
+      else
+        let next := listBind current fun (c1, m1) =>
+          base.map fun (c2, m2) =>
+            (c1 * c2, m1 ^^^ m2)
+        let merged := next.foldl (fun acc (c, m) => mergeZM acc c m) []
+        pow (k + 1) merged
+    let result := pow 1 base
+    result.map fun (coeff, mask) => zmToPauli startQ bits coeff mask
 
 def expandMonomial (m : Monomial) (offsets : List Nat) (varBits : List Nat) : List PauliString :=
   let nVars := varBits.length

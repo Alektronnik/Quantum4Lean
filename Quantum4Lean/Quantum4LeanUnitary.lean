@@ -176,6 +176,7 @@ private def expand1Q {n : Nat} (g : List Complex) (q : Nat) : UnitaryMatrix n :=
   { rows := (List.range d).map row, dim := d }
 
 private def expandCNOT {n : Nat} (c t : Nat) : UnitaryMatrix n :=
+  if c == t then UnitaryMatrix.identity n else
   let d := 1 <<< n
   let tMask := 1 <<< t
   let row (i : Nat) : List Complex :=
@@ -224,21 +225,65 @@ private def gateMatrix {n : Nat} (g : Gate n) : UnitaryMatrix n :=
   | .RY q theta => expand1Q (gateRY theta) q.idx.val
   | .RZ q theta => expand1Q (gateRZ theta) q.idx.val
   | .Unitary q matrix =>
-    let m : List Complex := [mkC (matrix[0]!) (matrix[1]!), mkC (matrix[2]!) (matrix[3]!),
-                             mkC (matrix[4]!) (matrix[5]!), mkC (matrix[6]!) (matrix[7]!)]
+    let m : List Complex :=
+      if matrix.size == 8 then
+        [mkC (matrix[0]!) (matrix[1]!), mkC (matrix[2]!) (matrix[3]!),
+         mkC (matrix[4]!) (matrix[5]!), mkC (matrix[6]!) (matrix[7]!)]
+      else
+        [co, cz, cz, co]
     expand1Q m q.idx.val
 
 -- ===================================================================
 -- Compilacion y verificacion semantica
 -- ===================================================================
 
+/--
+Valida que todas las puertas de un circuito sean correctas.
+En particular, verifica que `Gate.Unitary` tenga exactamente 8 floats
+(matriz 2x2 compleja en orden row-major: U00re, U00im, U01re, U01im, ...).
+-/
+def validateCircuit {n : Nat} (c : Circuit n) : Except String Unit :=
+  let rec go : List (Gate n) -> Except String Unit
+    | [] => Except.ok ()
+    | .Unitary _ matrix :: rest =>
+        if matrix.size == 8 then go rest
+        else Except.error s!"Gate.Unitary: matrix size={matrix.size}, esperado 8 floats"
+    | _ :: rest => go rest
+  go c.gates
+
+/--
+Compila un circuito a matriz unitaria (sin validacion).
+Las puertas `Gate.Unitary` con tamano distinto de 8 se interpretan
+silenciosamente como identidad. Para compilacion con validacion,
+usar `compileSafe`.
+-/
 def compile {n : Nat} (c : Circuit n) : UnitaryMatrix n :=
   c.gates.foldl (fun (u : UnitaryMatrix n) (g : Gate n) =>
     UnitaryMatrix.mul (gateMatrix g) u
   ) (UnitaryMatrix.identity n)
 
+/--
+Compila un circuito a matriz unitaria con validacion previa.
+Si alguna `Gate.Unitary` tiene tamano incorrecto, devuelve error.
+-/
+def compileSafe {n : Nat} (c : Circuit n) : Except String (UnitaryMatrix n) := do
+  validateCircuit c
+  Except.ok (compile c)
+
+/--
+Equivalencia semantica entre dos circuitos (sin validacion).
+Para equivalencia con validacion de puertas, usar `circuitsEquivSafe`.
+-/
 def circuitsEquiv {n : Nat} (c1 c2 : Circuit n) (epsilon : Float := 1e-6) : Bool :=
   UnitaryMatrix.equiv (compile c1) (compile c2) epsilon
+
+/--
+Equivalencia semantica entre dos circuitos con validacion previa.
+-/
+def circuitsEquivSafe {n : Nat} (c1 c2 : Circuit n) (epsilon : Float := 1e-6) : Except String Bool := do
+  let u1 <- compileSafe c1
+  let u2 <- compileSafe c2
+  Except.ok (UnitaryMatrix.equiv u1 u2 epsilon)
 
 -- ===================================================================
 -- Teoremas para n=2 (matrices 4x4, 16 complejos)
