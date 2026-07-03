@@ -13,6 +13,7 @@ Compatible: Lean 4.31.0.
 -/
 
 import Quantum4Lean.Quantum4LeanCore
+import Quantum4Lean.Quantum4LeanObservable
 
 namespace Quantum4Lean
 
@@ -240,6 +241,53 @@ def phaseDamping (rho : DensityMatrix n) (k : Nat) (lambda : Float) : DensityMat
       else set m2 i j (factor * re) (factor * im)
     ) m
   ) rho
+
+/--
+Valor esperado de un Observable sobre la density matrix.
+
+Tr(O rho) = sum_{P in O} P.coeff * Tr(P rho)
+
+Para cada PauliString P:
+  P actua sobre la base computacional como P|j> = phase(j) * |j XOR mask>
+  donde mask tiene 1s en qubits con X o Y.
+
+  Tr(P rho) = sum_i phase(i) * rho[i_XOR_mask, i]
+
+Fase por termino Pauli sobre qubit q en estado |b>:
+  I: 1
+  X: 1  (bit flip, sin fase)
+  Y: i * (-1)^b  (bit flip, fase compleja)
+  Z: (-1)^b  (sin bit flip, fase real)
+-/
+def expect (rho : DensityMatrix n) (obs : Observable) : Float :=
+  obs.strings.foldl (fun (acc : Float) (ps : PauliString) =>
+    let mask := ps.terms.foldl (fun (m : Nat) (t : PauliTerm) =>
+      match t.pauli with
+      | .X | .Y => m ||| (1 <<< t.qubit)
+      | _ => m
+    ) 0
+    let d := rho.dim
+    let trP := (List.range d).foldl (fun (sum : Float) (i : Nat) =>
+      let j := i ^^^ mask    -- i XOR mask
+      -- Calcular fase en estado j (el estado de entrada a P)
+      let phase := ps.terms.foldl (fun (ph : Float × Float) (t : PauliTerm) =>
+        let bit := (j >>> t.qubit) &&& 1
+        let (re, im) := ph
+        match t.pauli with
+        | .I => (re, im)
+        | .X => (re, im)                    -- X: fase 1
+        | .Z => (if bit == 0 then (re, im) else (-re, -im))  -- Z: (-1)^bit
+        | .Y =>                               -- Y: i * (-1)^bit
+          if bit == 0 then (-im, re)          -- i * 1 = i
+          else (im, -re)                      -- i * (-1) = -i
+      ) (1.0, 0.0)
+      let (rhoRe, rhoIm) := get rho j i
+      -- Tr(P rho) = sum phase * rho[j,i]
+      -- Real part: phase.re * rhoRe - phase.im * rhoIm
+      sum + (phase.1 * rhoRe - phase.2 * rhoIm)
+    ) 0.0
+    acc + ps.coefficient * trP
+  ) 0.0
 
 end DensityMatrix
 
