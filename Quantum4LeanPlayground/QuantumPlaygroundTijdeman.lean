@@ -66,7 +66,7 @@ def decodeTijdeman (sv : StateVector) : Int × Int :=
   let (bestIdx, _) : Nat × Float :=
     (List.range dim).foldl
       (fun ((bestI, bestP) : Nat × Float) (i : Nat) =>
-        let p : Float := probs.get! i
+        let p : Float := probs[i]!
         if p > bestP then (i, p) else (bestI, bestP)
       ) (0, 0.0)
   -- Decodificar x (bits 0-3) e y (bits 4-7)

@@ -52,7 +52,7 @@ Cada Z_i: RZ_i(-2*gamma*h)
 -/
 def qaoaIsingCostLayer (numQubits : Nat) (gamma : Float)
     (jCoupling : Float) (hField : Float) : Circuit numQubits :=
-  let gatesZZ := (List.range (numQubits - 1)).bind fun i =>
+  let gatesZZ := listBind (List.range (numQubits - 1)) fun i =>
     if hi : i < numQubits then
       if hi1 : i + 1 < numQubits then
         let qi := mkQ numQubits i hi
@@ -85,8 +85,8 @@ def qaoaIsingCircuit (numQubits : Nat) (p : Nat)
     let init : Circuit numQubits := { gates := initGates }
     -- p capas
     let layers := (List.range p).foldl (fun (c : Circuit numQubits) (layer : Nat) =>
-      let gamma := params.get? layer |>.getD 0.0
-      let beta  := params.get? (p + layer) |>.getD 0.0
+      let gamma := params[layer]? |>.getD 0.0
+      let beta  := params[p + layer]? |>.getD 0.0
       let costLayer := qaoaIsingCostLayer numQubits gamma jCoupling hField
       let mixLayer := qaoaMixingLayer numQubits beta
       c.comp costLayer |>.comp mixLayer

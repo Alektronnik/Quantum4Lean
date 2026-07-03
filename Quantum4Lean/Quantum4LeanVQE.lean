@@ -236,7 +236,7 @@ def isingAnsatz (numQubits : Nat) (depth : Nat := 1) : List Float -> Circuit num
           if pidx < params.length then
             if h : q < numQubits then
               let qubit : Qubit numQubits := ⟨⟨q, h⟩⟩
-              (circ.add (Gate.RY qubit (params.get! pidx)), pidx + 1)
+              (circ.add (Gate.RY qubit (params[pidx]!)), pidx + 1)
             else (circ, pidx + 1)
           else (circ, pidx)
         ) (c, pIdx)

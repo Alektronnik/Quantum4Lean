@@ -13,6 +13,16 @@ import Quantum4Lean.Quantum4LeanError
 
 namespace Quantum4Lean
 
+/--
+`List.bind` sin depender de `Monad List` ni `List.join`
+(no disponibles en Init de Lean 4.31.0).
+Equivalente a: `xs >>= f` en Haskell.
+-/
+def listBind {α β : Type} (xs : List α) (f : α → List β) : List β :=
+  match xs with
+  | [] => []
+  | x :: rest => f x ++ listBind rest f
+
 -- --- Qubit indexado --------------------------------------------
 
 /--

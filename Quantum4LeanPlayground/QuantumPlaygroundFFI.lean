@@ -27,7 +27,7 @@ def ffiInit (n : Nat) : IO (USize × FloatArray) := do
   let mb := (memBytes.toNat.toFloat / 1048576.0)
   IO.println ("FFI: " ++ toString n ++ " qubits, memoria: " ++ toString memBytes ++ " bytes")
   let dim : Nat := 1 <<< n
-  let arr : Array Float := Array.mkArray (2 * dim) 0.0
+  let arr : Array Float := Array.replicate (2 * dim) 0.0
   let estado : FloatArray := FloatArray.mk arr
   let token <- quantum4LeanInit n estado 12345
   if token == 0 then

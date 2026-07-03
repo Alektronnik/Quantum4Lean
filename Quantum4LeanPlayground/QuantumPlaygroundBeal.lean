@@ -34,9 +34,9 @@ private def caseReport (name : String) (aExp bExp cExp : Nat) (bitsA bitsB bitsC
   let dim := 1 <<< totalQubits
   let results := (List.range dim).filterMap fun state =>
     let vals := decodeState eq.varBits state
-    let a := vals.get! 0
-    let b := vals.get! 1
-    let c := vals.get! 2
+    let a := vals[0]!
+    let b := vals[1]!
+    let c := vals[2]!
     let af := intToFloat a; let bf := intToFloat b; let cf := intToFloat c
     let aPow := (List.range aExp).foldl (fun (acc : Float) _ => acc * af) 1.0
     let bPow := (List.range bExp).foldl (fun (acc : Float) _ => acc * bf) 1.0

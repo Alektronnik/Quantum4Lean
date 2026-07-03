@@ -39,7 +39,7 @@ private def pow2 (n : Nat) : Float :=
   | 0 => 1.0
   | n+1 => 2.0 * pow2 n
 
-private def listGet (xs : List α) (i : Nat) (d : α) : α := xs.get? i |>.getD d
+private def listGet (xs : List α) (i : Nat) (d : α) : α := xs[i]? |>.getD d
 
 private def qubitOffsets (varBits : List Nat) : List Nat :=
   let rec go (acc : Nat) : List Nat -> List Nat
@@ -64,15 +64,15 @@ private def expandQuadratic (startQ : Nat) (bits : Nat) : List PauliString :=
   let diagZ := List.map (fun j =>
     PauliString.mk (-pow2 (2*j) * half) [PauliTerm.mk .Z (startQ + j)]
   ) (List.range bits)
-  let offVals : List Float := List.bind (List.range bits) (fun j =>
+  let offVals : List Float := listBind (List.range bits) (fun j =>
     List.map (fun k => quarter * 2.0 * pow2 (j + k))
       (List.filter (fun k => j < k) (List.range bits)))
   let offI := List.foldl (fun acc x => acc + x) 0.0 offVals
-  let offZ : List PauliString := List.bind (List.range bits) (fun j =>
-    List.bind (List.filter (fun k => j < k) (List.range bits)) (fun k =>
+  let offZ : List PauliString := listBind (List.range bits) (fun j =>
+    listBind (List.filter (fun k => j < k) (List.range bits)) (fun k =>
       let c := half * pow2 (j + k)
       [PauliString.mk (-c) [PauliTerm.mk .Z (startQ + j)], PauliString.mk (-c) [PauliTerm.mk .Z (startQ + k)]]))
-  let offZZ : List PauliString := List.bind (List.range bits) (fun j =>
+  let offZZ : List PauliString := listBind (List.range bits) (fun j =>
     List.map (fun k =>
       PauliString.mk (half * pow2 (j + k)) [PauliTerm.mk .Z (startQ + j), PauliTerm.mk .Z (startQ + k)]
     ) (List.filter (fun k => j < k) (List.range bits)))
@@ -88,41 +88,41 @@ private def expandCubic (startQ : Nat) (bits : Nat) : List PauliString :=
     PauliString.mk (-pow2 (3*j) * half) [PauliTerm.mk .Z (startQ + j)]
   ) (List.range bits)
   -- pair
-  let pairVals : List Float := List.bind (List.range bits) (fun j =>
+  let pairVals : List Float := listBind (List.range bits) (fun j =>
     List.map (fun l => 3.0 * pow2 (2*j + l) * eighth)
       (List.filter (fun l => j ≠ l) (List.range bits)))
   let pairI := List.foldl (fun acc x => acc + x) 0.0 pairVals
-  let pairZ : List PauliString := List.bind (List.range bits) (fun j =>
-    List.bind (List.filter (fun l => j ≠ l) (List.range bits)) (fun l =>
+  let pairZ : List PauliString := listBind (List.range bits) (fun j =>
+    listBind (List.filter (fun l => j ≠ l) (List.range bits)) (fun l =>
       let c := 3.0 * pow2 (2*j + l) * quarter
       [PauliString.mk (-c) [PauliTerm.mk .Z (startQ + j)], PauliString.mk (-c) [PauliTerm.mk .Z (startQ + l)]]))
-  let pairZZ : List PauliString := List.bind (List.range bits) (fun j =>
+  let pairZZ : List PauliString := listBind (List.range bits) (fun j =>
     List.map (fun l =>
       PauliString.mk (3.0 * pow2 (2*j + l) * quarter)
         [PauliTerm.mk .Z (startQ + j), PauliTerm.mk .Z (startQ + l)]
     ) (List.filter (fun l => j ≠ l) (List.range bits)))
   -- triple
-  let tripleVals : List Float := List.bind (List.range bits) (fun j =>
-    List.bind (List.range bits) (fun k =>
+  let tripleVals : List Float := listBind (List.range bits) (fun j =>
+    listBind (List.range bits) (fun k =>
       List.map (fun l => 6.0 * pow2 (j + k + l) * eighth)
         (List.filter (fun l => j < k && k < l) (List.range bits))))
   let tripleI := List.foldl (fun acc x => acc + x) 0.0 tripleVals
-  let tripleZ : List PauliString := List.bind (List.range bits) (fun j =>
-    List.bind (List.range bits) (fun k =>
-      List.bind (List.filter (fun l => j < k && k < l) (List.range bits)) (fun l =>
+  let tripleZ : List PauliString := listBind (List.range bits) (fun j =>
+    listBind (List.range bits) (fun k =>
+      listBind (List.filter (fun l => j < k && k < l) (List.range bits)) (fun l =>
         let c := 6.0 * pow2 (j + k + l) * eighth
         [PauliString.mk (-c) [PauliTerm.mk .Z (startQ + j)],
          PauliString.mk (-c) [PauliTerm.mk .Z (startQ + k)],
          PauliString.mk (-c) [PauliTerm.mk .Z (startQ + l)]])))
-  let tripleZZ : List PauliString := List.bind (List.range bits) (fun j =>
-    List.bind (List.range bits) (fun k =>
-      List.bind (List.filter (fun l => j < k && k < l) (List.range bits)) (fun l =>
+  let tripleZZ : List PauliString := listBind (List.range bits) (fun j =>
+    listBind (List.range bits) (fun k =>
+      listBind (List.filter (fun l => j < k && k < l) (List.range bits)) (fun l =>
         let c := 6.0 * pow2 (j + k + l) * quarter
         [PauliString.mk c [PauliTerm.mk .Z (startQ + j), PauliTerm.mk .Z (startQ + k)],
          PauliString.mk c [PauliTerm.mk .Z (startQ + j), PauliTerm.mk .Z (startQ + l)],
          PauliString.mk c [PauliTerm.mk .Z (startQ + k), PauliTerm.mk .Z (startQ + l)]])))
-  let tripleZZZ : List PauliString := List.bind (List.range bits) (fun j =>
-    List.bind (List.range bits) (fun k =>
+  let tripleZZZ : List PauliString := listBind (List.range bits) (fun j =>
+    listBind (List.range bits) (fun k =>
       List.map (fun l =>
         PauliString.mk (-6.0 * pow2 (j + k + l) * eighth)
           [PauliTerm.mk .Z (startQ + j), PauliTerm.mk .Z (startQ + k), PauliTerm.mk .Z (startQ + l)]
@@ -147,7 +147,7 @@ def expandMonomial (m : Monomial) (offsets : List Nat) (varBits : List Nat) : Li
     expandVarPower startQ bits exp
   ) (List.range nVars)
   let combined : List PauliString := List.foldl (fun (acc : List PauliString) (terms : List PauliString) =>
-    List.bind acc (fun a => List.map (fun t =>
+    listBind acc (fun a => List.map (fun t =>
       { coefficient := a.coefficient * t.coefficient, terms := a.terms ++ t.terms }
     ) terms)
   ) [identTerm] perVar
@@ -159,19 +159,19 @@ def polyToIsing (eq : PolyEquation) : Observable :=
   let c := intToFloat eq.constant
   let expanded : List (List PauliString) :=
     List.map (fun m => expandMonomial m offsets eq.varBits) eq.monomials
-  let selfSq : List PauliString := List.bind expanded (fun terms =>
-    List.bind terms (fun a => List.map (fun b =>
+  let selfSq : List PauliString := listBind expanded (fun terms =>
+    listBind terms (fun a => List.map (fun b =>
       { coefficient := a.coefficient * b.coefficient, terms := a.terms ++ b.terms }
     ) terms))
   let nMon := expanded.length
-  let cross : List PauliString := List.bind (List.range nMon) (fun i =>
-    List.bind (List.filter (fun k => i < k) (List.range nMon)) (fun k =>
+  let cross : List PauliString := listBind (List.range nMon) (fun i =>
+    listBind (List.filter (fun k => i < k) (List.range nMon)) (fun k =>
       let termsI := listGet expanded i []
       let termsK := listGet expanded k []
-      List.bind termsI (fun a => List.map (fun b =>
+      listBind termsI (fun a => List.map (fun b =>
         { coefficient := 2.0 * a.coefficient * b.coefficient, terms := a.terms ++ b.terms }
       ) termsK)))
-  let linearC : List PauliString := List.bind expanded (fun terms =>
+  let linearC : List PauliString := listBind expanded (fun terms =>
     List.map (fun ps => { ps with coefficient := -2.0 * c * ps.coefficient }) terms)
   let constTerm := PauliString.mk (c * c) []
   { strings := selfSq ++ cross ++ linearC ++ [constTerm] }
