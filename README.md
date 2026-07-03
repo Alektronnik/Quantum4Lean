@@ -2,7 +2,7 @@
 
 Computacion cuantica verificada en Lean 4. Motor puro-Lean bit-exacto con CoreQU4TRIX (C++/Metal). Stack NISQ completo: StateVector, Observables, VQE, QAOA. DSL declarativo, tactica `circuit_equiv` y fuzzer intra-Lean.
 
-Estado: v0.5.1 -- 18 modulos activos, build autocontenido, 224 tests (208 fuzz + 16 teoremas).
+Estado: v0.6.0 -- 18 modulos activos, build autocontenido, 224 tests (208 fuzz + 16 teoremas).
 
 ## Build
 
@@ -25,11 +25,13 @@ Cero dependencias externas. Solo requiere Lean 4 (v4.7.0).
     |       |       |       |
    DSL   Tactic   Simp  Transpile  Clifford
 
-Quantum4LeanPlayground/          -- Demostraciones avanzadas
-+-- QuantumDiophantineSolver.lean -- Solver unificado (Pentalogia)
-+-- QuantumTijdeman.lean          -- Tijdeman cuantico
-+-- QuantumRiemann.lean           -- Riemann + Cuantica
-+-- QuantumTRDU.lean              -- TRDU-Q
+Quantum4LeanPlayground/          -- Demostraciones
++-- QuantumPlaygroundDiophantine  -- Solver diofantino
++-- QuantumPlaygroundBeal         -- Conjetura de Beal
++-- QuantumPlaygroundFFI          -- FFI Metal 3
++-- QuantumPlaygroundTijdeman     -- Tijdeman QAOA
++-- QuantumPlaygroundRiemann      -- Riemann + Cuantica
++-- QuantumPlaygroundTRDU         -- TRDU-Q
 ```
 
 ## Uso rapido
@@ -168,22 +170,32 @@ let n := polyTotalQubits eq -- 8 qubits
 
 Demostraciones avanzadas que extienden la libreria. Import independiente.
 
-### Solver Diofantino Unificado
+### Solver Diofantino (QuantumPlaygroundDiophantine)
 
-6 casos de la Pentalogia con busqueda exhaustiva + analisis Beal (gcd):
+4 casos con busqueda exhaustiva via polyToIsing:
 
 ```lean
 import Quantum4LeanPlayground
-
-#eval Quantum4LeanPlayground.DiophantineSolver.report
+#eval Quantum4LeanPlayground.Diophantine.report
 ```
 
-Casos: Tijdeman (sol 3,2), Pillai n=2 (sol 3,5),
-Pillai n=3 (conjeturado sin sol), Pitagoras (terna 3,4,5),
-Beal a^3+b^3=c^2 (sol 2,2,4; 1,2,3), Beal a^3+b^2=c^3 (exploracion).
+Casos: Tijdeman, Pillai n=2, Pillai n=3, Pitagoras.
 
-Incluye analisis de la propiedad Beal: gcd(a,b,c) para
-soluciones exactas de 3 variables.
+### Conjetura de Beal (QuantumPlaygroundBeal)
+
+Busqueda masiva de contraejemplos en 3 escalas (9, 12, 19 qubits):
+
+```lean
+#eval Quantum4LeanPlayground.Beal.report
+```
+
+### FFI Apple Silicon (QuantumPlaygroundFFI)
+
+Motor C++/Metal hasta 30 qubits. Requiere `bash build_ffi.sh`.
+
+```lean
+#eval Quantum4LeanPlayground.FFI.report
+```
 
 ### Tijdeman Cuantico
 
@@ -236,10 +248,13 @@ Quantum4Lean/
 |   +-- (7 modulos conservados)
 +-- Quantum4LeanPlayground.lean    -- Root del Playground
 +-- Quantum4LeanPlayground/
-|   +-- QuantumDiophantineSolver.lean -- Solver unificado
-|   +-- QuantumTijdeman.lean       -- Tijdeman cuantico
-|   +-- QuantumRiemann.lean        -- Resonancia de Riemann
-|   +-- QuantumTRDU.lean           -- TRDU-Q
+|   +-- QuantumPlaygroundDiophantine.lean -- Solver diofantino
+|   +-- QuantumPlaygroundBeal.lean        -- Beal (3 escalas)
+|   +-- QuantumPlaygroundFFI.lean         -- FFI Metal 3
+|   +-- QuantumPlaygroundTijdeman.lean    -- Tijdeman QAOA
+|   +-- QuantumPlaygroundRiemann.lean     -- Riemann
+|   +-- QuantumPlaygroundTRDU.lean        -- TRDU
++-- Quantum4LeanBridge/            -- Puente C (FFI opcional)
 +-- .github/workflows/ci.yml       -- CI
 +-- README.md
 +-- MANUAL.md

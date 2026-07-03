@@ -1,6 +1,6 @@
 # Quantum4Lean -- Manual de Usuario
 
-v0.5.1. Julio 2026.
+v0.6.0. Julio 2026.
 
 ## Indice
 
@@ -719,43 +719,39 @@ import Quantum4LeanPlayground
 #eval Quantum4LeanPlayground.Tijdeman.report
 ```
 
-### Solver Diofantino Unificado
+### Solver Diofantino (QuantumPlaygroundDiophantine)
 
-Motor generico que toma cualquier `PolyEquation`, construye el Hamiltoniano
-via `polyToIsing`, ejecuta busqueda exhaustiva (ground truth) y opcionalmente
-QAOA. Incluye 6 casos predefinidos con analisis Beal (gcd):
+4 casos predefinidos. Namespace: `Quantum4LeanPlayground.Diophantine`.
 
-| Caso | Ecuacion | Solucion esperada |
-|------|----------|-------------------|
+| Caso | Ecuacion | Solucion |
+|------|----------|----------|
 | Tijdeman | $x^2 = y^3 + 1$ | $x=3, y=2$ |
 | Pillai n=2 | $a^3 = b^2 + 2$ | $a=3, b=5$ |
-| Pillai n=3 | $a^3 = b^2 + 3$ | Ninguna (conjeturado) |
-| Pitagoras | $x^2 + y^2 = z^2$ | $x=3, y=4, z=5$ |
-| Beal cubico | $a^3 + b^3 = c^2$ | $(2,2,4), (1,2,3)$ |
-| Beal mixto | $a^3 + b^2 = c^3$ | Exploracion |
-
-Para soluciones exactas de 3 variables, el reporte incluye `gcd(a,b,c)`
-verificando la propiedad de la Conjetura de Beal (gcd > 1 requerido).
+| Pillai n=3 | $a^3 = b^2 + 3$ | Ninguna |
+| Pitagoras | $x^2 + y^2 = z^2$ | $3,4,5$ |
 
 ```lean
 import Quantum4LeanPlayground
-
--- Reporte completo de los 4 casos
-#eval Quantum4LeanPlayground.DiophantineSolver.report
-
--- Resolver un caso especifico
-#eval Quantum4LeanPlayground.DiophantineSolver.solveCase
-  Quantum4LeanPlayground.DiophantineSolver.tijdemanCase
-
--- Busqueda exhaustiva manual
-#eval Quantum4LeanPlayground.DiophantineSolver.bruteForceSolve
-  miPolyEquation
-
--- QAOA (mas lento, solo Tijdeman)
-#eval Quantum4LeanPlayground.DiophantineSolver.reportQAOA
+#eval Quantum4LeanPlayground.Diophantine.report
 ```
 
-### Tijdeman Cuantico
+### Beal (QuantumPlaygroundBeal)
+
+Busqueda masiva de contraejemplos en 3 escalas.
+
+```lean
+#eval Quantum4LeanPlayground.Beal.report
+```
+
+### FFI (QuantumPlaygroundFFI)
+
+Motor C++/Metal hasta 30 qubits. Requiere `bash build_ffi.sh`.
+
+```lean
+#eval Quantum4LeanPlayground.FFI.report
+```
+
+### Tijdeman Cuantico (QuantumPlaygroundTijdeman)
 
 Solucion dedicada de $x^2 = y^3 + 1$ via QAOA con ansatz optimizado.
 
@@ -937,10 +933,12 @@ Quantum4Lean/
 |   +-- (8 modulos conservados)    -- FFI, Monad, Compile, Sim, etc.
 +-- Quantum4LeanPlayground.lean    -- Root del Playground
 +-- Quantum4LeanPlayground/
-|   +-- QuantumDiophantineSolver.lean -- Solver unificado
-|   +-- QuantumTijdeman.lean       -- Tijdeman cuantico
-|   +-- QuantumRiemann.lean        -- Resonancia de Riemann
-|   +-- QuantumTRDU.lean           -- TRDU-Q
+|   +-- QuantumPlaygroundDiophantine.lean -- Solver diofantino
+|   +-- QuantumPlaygroundBeal.lean        -- Beal (3 escalas)
+|   +-- QuantumPlaygroundFFI.lean         -- FFI Metal 3
+|   +-- QuantumPlaygroundTijdeman.lean    -- Tijdeman QAOA
+|   +-- QuantumPlaygroundRiemann.lean     -- Riemann
+|   +-- QuantumPlaygroundTRDU.lean        -- TRDU
 +-- .github/workflows/ci.yml       -- Integracion Continua
 +-- lakefile.lean                  -- Build autocontenido
 +-- README.md                      -- Documentacion
