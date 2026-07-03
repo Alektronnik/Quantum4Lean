@@ -270,4 +270,64 @@ Convierte LiH a Observable listo para VQE.
 -/
 def lihObservable : Observable := fermionToObservable lihHamiltonian
 
+-- ===================================================================
+-- Topologia Half-Mobius (C13Cl2) — generacion algoritmica pura
+-- ===================================================================
+
+/--
+Genera el Hamiltoniano de topologia Half-Mobius para n qubits.
+
+Reglas topologicas (basadas en el experimento IBM/Science 2026):
+  1. Anillo ZZ: acoplamiento Z_i Z_{i+1} ciclico (mod n)
+  2. Twist XX: acoplamiento X_i X_{i+n/4} (giro de 90 grados)
+  3. Quiralidad YY: terminos Y_i Y_{i+n/3} (rompe simetria especular)
+  4. Potencial local Z_i modulado sinusoidalmente
+
+Parametros: nQubits (26 para C13Cl2), intensidades de acoplamiento.
+Genera O(n) PauliStrings algoritmicamente — sin datos externos.
+-/
+def mobiusTopologyObservable (nQubits : Nat) (jRing : Float := 0.5)
+    (jTwist : Float := 0.15) (jChiral : Float := 0.08)
+    (muBase : Float := 0.1) : Observable :=
+  let modRing (i : Nat) : Nat := i % nQubits
+  -- 1. Anillo ZZ ciclico
+  let zzTerms : List PauliString :=
+    (List.range nQubits).map fun i =>
+      let j := modRing (i + 1)
+      { coefficient := jRing
+      , terms := [PauliTerm.mk .Z i, PauliTerm.mk .Z j] }
+  -- 2. Twist XX a distancia n/4
+  let twistDist : Nat := nQubits / 4
+  let xxTerms : List PauliString :=
+    (List.range (nQubits - twistDist)).map fun i =>
+      { coefficient := jTwist
+      , terms := [PauliTerm.mk .X i, PauliTerm.mk .X (i + twistDist)] }
+  -- 3. Quiralidad YY a distancia n/3
+  let chiralDist : Nat := nQubits / 3
+  let yyTerms : List PauliString :=
+    (List.range nQubits).filterMap fun i =>
+      if i % 2 == 0 then
+        let j := modRing (i + chiralDist)
+        some { coefficient := jChiral
+             , terms := [PauliTerm.mk .Y i, PauliTerm.mk .Y j] }
+      else none
+  -- 4. Campo local Z modulado
+  let pi : Float := 3.141592653589793
+  let zLocal : List PauliString :=
+    (List.range nQubits).map fun i =>
+      let phase := pi * (i.toFloat / nQubits.toFloat)
+      let sinVal := Float.sin phase
+      let mu := muBase * (1.0 + 0.05 * sinVal)
+      { coefficient := -mu
+      , terms := [PauliTerm.mk .Z i] }
+  { strings := zzTerms ++ xxTerms ++ yyTerms ++ zLocal }
+
+/--
+Observable Mobius precomputado a 26 qubits (C13Cl2).
+
+Generado algoritmicamente via mobiusTopologyObservable 26.
+~86 PauliStrings. Sin dependencias externas.
+-/
+def mobiusObservable : Observable := mobiusTopologyObservable 26
+
 end Quantum4Lean

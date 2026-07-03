@@ -63,6 +63,7 @@ export Quantum4Lean (Qubit Gate Circuit StateVector
   FermionOp FermionTerm FermionHamiltonianTerm FermionHamiltonian
   jwSingle jwTermToObservable pauliStringMul
   fermionToObservable h2Hamiltonian h2Observable
-  lihHamiltonian lihObservable)
+  lihHamiltonian lihObservable
+  mobiusTopologyObservable mobiusObservable)
 
 -- DSL y tacticas disponibles via `import Quantum4Lean` automaticamente
