@@ -1,3 +1,4 @@
+#include <stddef.h>
 #include "Quantum4LeanFFI.h"
 #include "QuantumKitCore.h"
 

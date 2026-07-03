@@ -80,9 +80,9 @@ def report : IO String := do
   let s30 <- runStress30
   return d20 ++ "\n\n" ++ s30
 
-/-- Main ejecutable. --/
-def main : IO Unit := do
-  let r <- report
-  IO.println r
-
 end Quantum4LeanPlayground.FFI
+
+/-- Main ejecutable FFI. --/
+def main : IO Unit := do
+  let r <- Quantum4LeanPlayground.FFI.report
+  IO.println r

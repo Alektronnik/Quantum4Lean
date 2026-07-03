@@ -29,5 +29,10 @@ Ejecutable de validacion: tests unitarios + fuzzer.
 lean_exe «quantum4lean-test» where
   root := `Quantum4Lean.Quantum4LeanRunner
 
--- NOTA: El ejecutable FFI requiere que ld64.lld soporte -framework
--- (Apple Metal/Foundation). Infraestructura lista para futuras versiones.
+/--
+Ejecutable FFI (CPU-only): puente a motor C++ sin Metal.
+  bash build_cpu_ffi.sh && lake build quantum4lean-ffi
+-/
+lean_exe «quantum4lean-ffi» where
+  root := `Quantum4LeanPlayground.QuantumPlaygroundFFI
+  moreLinkArgs := #["-L.", "-lQuantum4LeanCPU"]
