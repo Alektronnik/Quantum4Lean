@@ -42,13 +42,11 @@ Ejecutable FFI (CPU-only): puente a motor C++ sin Metal.
 -/
 lean_exe «quantum4lean-ffi» where
   root := `Quantum4LeanPlayground.QuantumPlaygroundFFICPU
-  -- Requiere LEAN_CC=clang. Ajusta la ruta a tu toolchain Lean.
-  -- Ruta tipica: ~/.elan/toolchains/leanprover--lean4---v4.31.0/lib
-  moreLinkArgs := #[
-    "-L.", "-lQuantum4LeanCPU",
-    "-L", "/Users/bezalelizquierdoperez/.elan/toolchains/leanprover--lean4---v4.31.0/lib",
-    "-lgmp"
-  ]
+  -- Requiere LEAN_CC=clang. La ruta a libgmp se deriva de __dir__.
+  -- Si el path cambia, ajusta elanLibDir a tu toolchain Lean.
+  moreLinkArgs :=
+    let elanLibDir := (ToString.toString __dir__) ++ "/../../../.elan/toolchains/leanprover--lean4---v4.31.0/lib"
+    #["-L.", "-lQuantum4LeanCPU", "-L", elanLibDir, "-lgmp"]
 
 /--
 Ejecutable FFI (Metal GPU): puente a motor C++ con Metal en Apple Silicon.
@@ -57,9 +55,7 @@ Requiere LEAN_CC=clang para enlazar frameworks Apple.
 -/
 lean_exe «quantum4lean-ffi-metal» where
   root := `Quantum4LeanPlayground.QuantumPlaygroundFFIMetal
-  moreLinkArgs := #[
-    "-L.", "-lQuantum4LeanMetal",
-    "-L", "/Users/bezalelizquierdoperez/.elan/toolchains/leanprover--lean4---v4.31.0/lib",
-    "-lgmp",
-    "-framework", "Metal", "-framework", "Foundation"
-  ]
+  moreLinkArgs :=
+    let elanLibDir := (ToString.toString __dir__) ++ "/../../../.elan/toolchains/leanprover--lean4---v4.31.0/lib"
+    #["-L.", "-lQuantum4LeanMetal", "-L", elanLibDir, "-lgmp",
+      "-framework", "Metal", "-framework", "Foundation"]

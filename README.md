@@ -34,6 +34,7 @@ buildCPU.sh buildFFI.sh buildMetal.sh  -- Scripts de compilacion CPU/FFI/Metal
 
 ```lean
 import Quantum4Lean
+open Quantum4Lean
 open Quantum4Lean.DSL.Shortcuts
 
 -- Circuito Bell con DSL declarativo
@@ -50,7 +51,7 @@ def bell : Circuit 2 := circuit! {
 #eval circuitsEquiv bell bell
 -- true
 
--- Usar la tactica (n <= 3, sin puertas H)
+-- Tactica circuit_equiv (Clifford, sin H)
 example : circuitsEquiv
   (circuit fun c => (c.add (Gate.X q[0])).add (Gate.X q[0]))
   (Circuit.identity 2) := by
@@ -72,7 +73,7 @@ example : circuitsEquiv
 | Optimizacion | `simplifyCircuit`, `optimizeCircuit`, `verifyOptimization`, `quantumEquivCheck` |
 | DSL | `circuit! { ... }`, `q[i]`, `H`, `X`, `CNOT`, ... (Shortcuts) |
 | Fuzzer circuitos | `FuzzConfig`, `FuzzReport`, `runFullSuite` |
-| Fuzzer diofantino | `DiophantineFuzz.generateWithSolution`, `runFuzz`, `report` |
+| Fuzzer diofantino | `generateWithSolution`, `runDiophantineFuzz`, `diophantineFuzzReport` |
 | Diofantico | `Diophantine`, `toIsing`, `diophantineSolve`, `checkSolution` |
 | Polinomico | `Monomial`, `PolyEquation`, `polyToIsing`, `expandVarPower` (grado arbitrario) |
 | Quimica | `h2ExactObservable`, `h2Observable`, `lihObservable`, `fermionToObservable` |
@@ -170,15 +171,22 @@ let n := polyTotalQubits eq -- 8 qubits
 
 ## FFI: Puente C++/Metal (Apple Silicon)
 
-Motor externo con GPU acceleration via Metal 3. CPU: hasta 25 qubits (~512 MB). Metal GPU: Apple Silicon M2/M3 con memoria unificada. Dos variantes: CPU-only y Metal GPU.
+Motor externo con GPU acceleration via Metal 3. CPU: hasta 25 qubits (~1 GB). Metal GPU: Apple Silicon M2/M3 con memoria unificada.
+
+Requiere `../QuantumKit` (repositorio hermano con el motor C++). Configuracion:
 
 ```bash
-# CPU-only
-bash buildCPU.sh && lake build quantum4lean-ffi
+bash setup.sh          # clona QuantumKit si no existe + compila libs
+# o paso a paso:
+bash buildCPU.sh       # libQuantum4LeanCPU.a
+bash buildMetal.sh     # libQuantum4LeanMetal.a
+
+# Ejecutar CPU
+LEAN_CC=clang lake build quantum4lean-ffi
 .lake/build/bin/quantum4lean-ffi
 
-# Metal GPU (requiere LEAN_CC=clang)
-bash buildMetal.sh && LEAN_CC=clang lake build quantum4lean-ffi-metal
+# Ejecutar Metal GPU
+LEAN_CC=clang lake build quantum4lean-ffi-metal
 .lake/build/bin/quantum4lean-ffi-metal
 ```
 
