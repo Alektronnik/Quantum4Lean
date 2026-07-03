@@ -3,15 +3,14 @@ QuantumPlaygroundDiophantine.lean
 Solver unificado para ecuaciones diofantinas via polyToIsing + QAOA.
 
 Casos: Tijdeman, Pillai n=2, Pillai n=3, Pitagoras.
-Beal en QuantumPlaygroundBeal.lean.
-
-Dependencias: Quantum4Lean (Polynomial, Observable, QAOA).
-Build autocontenido. Lean 4.7.0.
+Dependencias: Quantum4Lean, QuantumPlaygroundCommon.
 -/
 
 import Quantum4Lean
+import Quantum4LeanPlayground.QuantumPlaygroundCommon
 
 open Quantum4Lean
+open Quantum4LeanPlayground.Common
 
 namespace Quantum4LeanPlayground.Diophantine
 
@@ -21,56 +20,6 @@ structure DiophantineCase where
   expected    : List (List (String × Int))
   description : String
   deriving Repr
-
-private def intToFloat (x : Int) : Float :=
-  if x >= 0 then x.toNat.toFloat else -(((-x).toNat.toFloat))
-
-private def decodeState (varBits : List Nat) (state : Nat) : List Int :=
-  let offsets : List Nat :=
-    let rec go (acc : Nat) : List Nat -> List Nat
-      | [] => []
-      | b :: bs => acc :: go (acc + b) bs
-    go 0 varBits
-  List.mapIdx (fun i (bits : Nat) =>
-    let start := offsets.get\! i
-    (List.range bits).foldl (fun (acc : Nat) (j : Nat) =>
-      if ((state >>> (start + j)) &&& 1) == 1 then acc + (1 <<< j) else acc
-    ) 0
-  ) varBits
-
-def evalCost (eq : PolyEquation) (vals : List Int) : Float :=
-  let c := if eq.constant >= 0 then eq.constant.toNat.toFloat
-           else -(((-eq.constant).toNat.toFloat))
-  let evalMonom (m : Monomial) : Float :=
-    let prod := m.exponents.foldl (fun (acc : Float) ((vi, e) : Nat × Nat) =>
-      let v := vals.get\! vi
-      let vf := if v >= 0 then v.toNat.toFloat else -(((-v).toNat.toFloat))
-      let p := if e == 0 then 1.0
-               else if e == 1 then vf
-               else if e == 2 then vf * vf
-               else vf * vf * vf
-      acc * p
-    ) 1.0
-    let mc := if m.coefficient >= 0 then m.coefficient.toNat.toFloat
-              else -(((-m.coefficient).toNat.toFloat))
-    mc * prod
-  let polyVal := eq.monomials.foldl (fun acc m => acc + evalMonom m) 0.0
-  let diff := polyVal - c
-  diff * diff
-
-def bruteForceSolve (eq : PolyEquation) (tolerance : Float := 1e-6)
-    : List (List Int × Float) :=
-  let totalQubits := eq.varBits.foldl (fun acc b => acc + b) 0
-  let dim := 1 <<< totalQubits
-  let allResults : List (Nat × Float) := (List.range dim).map fun state =>
-    let vals := decodeState eq.varBits state
-    (state, evalCost eq vals)
-  let minEnergy := allResults.foldl (fun best ((_, e) : Nat × Float) =>
-    if e < best then e else best
-  ) 1e30
-  let solutions := allResults.filter fun (_, e) => (e - minEnergy).abs < tolerance
-  solutions.map fun (state, e) =>
-    (decodeState eq.varBits state, e)
 
 def qaoaSolve (eq : PolyEquation) (p : Nat := 1)
     (lr : Float := 0.05) (iters : Nat := 200) : Float × List (List Int × Float) :=
@@ -92,10 +41,6 @@ def verifySolution (eq : PolyEquation) (vals : List Int) : Bool :=
 def formatSolution (vals : List Int) (names : List String) : String :=
   let parts := List.zip names vals |>.map fun (n, v) => s\!"{n}={v}"
   String.intercalate ", " parts
-
--- ===================================================================
--- Casos
--- ===================================================================
 
 def tijdemanCase : DiophantineCase := {
   name := "Tijdeman"
@@ -156,10 +101,6 @@ def pythagoreanCase : DiophantineCase := {
 
 def allCases : List DiophantineCase :=
   [tijdemanCase, pillaiCaseN2, pillaiCaseN3, pythagoreanCase]
-
--- ===================================================================
--- Reporte
--- ===================================================================
 
 def solveCase (c : DiophantineCase) : String :=
   let eq := c.equation

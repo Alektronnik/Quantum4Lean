@@ -18,6 +18,7 @@ Uso:
   #eval Quantum4LeanPlayground.TRDU.report
 -/
 
+import Quantum4LeanPlayground.QuantumPlaygroundCommon
 import Quantum4LeanPlayground.QuantumPlaygroundDiophantine
 import Quantum4LeanPlayground.QuantumPlaygroundFuzz
 import Quantum4LeanPlayground.QuantumPlaygroundBeal
