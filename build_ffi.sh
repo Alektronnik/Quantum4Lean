@@ -25,19 +25,12 @@ clang++ -c -O3 -std=c++17 \
   "$ENGINE_DIR/engine/QuantumKitCore.mm" \
   -o /tmp/ql4_engine.o
 
-echo "[2/3] Compilando puente C (Quantum4LeanBridge)..."
+echo "[2/3] Compilando puente C (Quantum4LeanFFI)..."
 clang -c -O3 -include stddef.h \
   -I"$BRIDGE_DIR" \
   -I"$ENGINE_DIR/include" \
-  /tmp/ql4_bridge_v3.c \
-  -o /tmp/ql4_bridge.o 2>/dev/null || {
-  # Si no existe el archivo temporal, compilar desde el fuente en el bridge
-  clang -c -O3 -include stddef.h \
-    -I"$BRIDGE_DIR" \
-    -I"$ENGINE_DIR/include" \
-    "$BRIDGE_DIR/../Quantum4LeanBridge/Quantum4LeanBridge.c" \
-    -o /tmp/ql4_bridge.o
-}
+  "$BRIDGE_DIR/Quantum4LeanFFI.c" \
+  -o /tmp/ql4_bridge.o
 
 echo "[3/3] Creando libreria estatica..."
 ar rcs "$OUTPUT" /tmp/ql4_bridge.o /tmp/ql4_engine.o

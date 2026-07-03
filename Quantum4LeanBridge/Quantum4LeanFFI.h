@@ -1,6 +1,6 @@
 /*
- * Quantum4LeanFFI_v2.h
- * API C simplificada para Lean 4.7.0 (FloatArray en lugar de Ptr).
+ * Quantum4LeanFFI.h
+ * API C para Lean 4.7.0 (FloatArray). Sin Ptr.
  * Todas las funciones reciben/retornan tipos escalares o FloatArray.
  */
 
