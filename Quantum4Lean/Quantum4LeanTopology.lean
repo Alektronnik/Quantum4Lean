@@ -165,33 +165,19 @@ private def gaussianSolve (a : List (List Float)) (b : List Float) (n : Nat) : O
 /--
 Proyector armonico: P_H = I - d0(d0†d0)⁻¹d0† - d1†(d1d1†)⁻¹d1
 
-Para matrices pequeñas (n ≤ 20), usa eliminacion gaussiana.
-Para matrices mayores, devuelve matriz identidad como fallback.
+NO IMPLEMENTADO: requiere eigendecomposicion (LAPACK).
+Devuelve none para indicar que el calculo no esta disponible.
 -/
-def harmonicProjector (d0 : SparseMatrix) (_d1 : SparseMatrix) : SparseMatrix :=
-  let n1 := d0.nrows  -- dimension de 1-formas (aristas)
-  if n1 > 20 || n1 == 0 then
-    SparseMatrix.identity n1  -- fallback para matrices grandes
-  else
-    -- d0† d0 (matriz densa nV x nV) — computado para expansion futura
-    let _d0t := SparseMatrix.transpose d0
-    -- Implementacion simplificada: identidad para n1 > 0
-    -- (la implementacion completa de Hodge requiere LAPACK/eigendecomposicion)
-    SparseMatrix.identity n1
+def harmonicProjector (_d0 : SparseMatrix) (_d1 : SparseMatrix) : Option SparseMatrix :=
+  none
 
 /--
-Calcula el numero de Betti b₁ = dim(H¹) = trace(P_harmonic).
+Calcula el numero de Betti b₁ = dim(H¹).
 
-Para sistemas pequeños, es exacto.
-Para sistemas grandes, devuelve 0 (requiere eigendecomposicion).
+NO IMPLEMENTADO: requiere harmonicProjector funcional.
+Devuelve 0 como fallback seguro.
 -/
-def bettiNumber (d0 : SparseMatrix) (d1 : SparseMatrix) : Nat :=
-  let pH := harmonicProjector d0 d1
-  let tr := SparseMatrix.trace pH
-  -- La traza del proyector armonico es exactamente b₁ (entero)
-  -- Redondeamos al entero mas cercano
-  let rounded : Nat := (tr + 0.5).toUInt64.toNat
-  rounded
+def bettiNumber (_d0 : SparseMatrix) (_d1 : SparseMatrix) : Nat := 0
 
 -- ===================================================================
 -- FirmaPrima: clasificacion de enteros por signatura prima
