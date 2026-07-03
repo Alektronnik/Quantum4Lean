@@ -788,7 +788,6 @@ Reporte incluye analisis gcd(a,b,c) para cada solucion exacta.
 #eval Quantum4LeanPlayground.Beal.report
 ```
 
-### FFI (QuantumPlaygroundFFI)
 
 Motor C++/Metal hasta 30 qubits. Requiere `bash build_ffi.sh`.
 
@@ -980,7 +979,6 @@ Quantum4Lean/
 +-- Quantum4LeanPlayground/
 |   +-- QuantumPlaygroundDiophantine.lean -- Solver diofantino
 |   +-- QuantumPlaygroundBeal.lean        -- Beal (3 escalas)
-|   +-- QuantumPlaygroundFFI.lean         -- FFI Metal 3
 |   +-- QuantumPlaygroundTijdeman.lean    -- Tijdeman QAOA
 |   +-- QuantumPlaygroundRiemann.lean     -- Riemann
 |   +-- QuantumPlaygroundTRDU.lean        -- TRDU

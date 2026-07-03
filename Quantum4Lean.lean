@@ -33,6 +33,7 @@ import Quantum4Lean.Quantum4LeanDSL
 import Quantum4Lean.Quantum4LeanTactic
 import Quantum4Lean.Quantum4LeanPolynomial
 import Quantum4Lean.Quantum4LeanSolver
+import Quantum4Lean.Quantum4LeanDiophantineFuzz
 
 export Quantum4Lean (Qubit Gate Circuit StateVector
   executeSim executeSimProbs
