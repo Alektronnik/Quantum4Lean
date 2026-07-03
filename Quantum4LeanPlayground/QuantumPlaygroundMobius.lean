@@ -16,10 +16,8 @@ Modos:
 -/
 
 import Quantum4Lean
-import Quantum4LeanPlayground.MobiusAnsatz
 
 open Quantum4Lean
-open Quantum4LeanPlayground.Mobius
 
 namespace Quantum4LeanPlayground.Mobius
 
