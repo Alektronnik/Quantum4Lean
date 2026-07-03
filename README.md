@@ -170,17 +170,20 @@ Demostraciones avanzadas que extienden la libreria. Import independiente.
 
 ### Solver Diofantino Unificado
 
-4 casos predefinidos de la Pentalogia Diofantica con busqueda exhaustiva:
+6 casos de la Pentalogia con busqueda exhaustiva + analisis Beal (gcd):
 
 ```lean
 import Quantum4LeanPlayground
 
 #eval Quantum4LeanPlayground.DiophantineSolver.report
--- Tijdeman (x^2=y^3+1), Pillai n=2, Pillai n=3, Pitagoras (x^2+y^2=z^2)
 ```
 
-Casos: Tijdeman (solucion 3,2), Pillai n=2 (solucion 3,5),
-Pillai n=3 (conjeturado sin solucion), Pitagoras (terna 3,4,5).
+Casos: Tijdeman (sol 3,2), Pillai n=2 (sol 3,5),
+Pillai n=3 (conjeturado sin sol), Pitagoras (terna 3,4,5),
+Beal a^3+b^3=c^2 (sol 2,2,4; 1,2,3), Beal a^3+b^2=c^3 (exploracion).
+
+Incluye analisis de la propiedad Beal: gcd(a,b,c) para
+soluciones exactas de 3 variables.
 
 ### Tijdeman Cuantico
 
