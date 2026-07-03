@@ -1,33 +1,29 @@
 # Quantum4Lean
 
-Computacion cuantica verificada en Lean 4. Motor puro-Lean bit-exacto con CoreQU4TRIX (C++/Metal). Stack NISQ completo: StateVector, Observables, VQE, QAOA. DSL declarativo, tactica `circuit_equiv` y fuzzer intra-Lean.
+Computacion cuantica verificada en Lean 4. Motor puro-Lean bit-exacto. Stack NISQ completo: StateVector, Observables, VQE, QAOA, Density Matrix + ruido. DSL declarativo, exportador OpenQASM 3.0, tactica `circuit_equiv` y fuzzer intra-Lean.
 
-Estado: v0.6.1 -- 17 modulos libreria, 5 playgrounds, 224 tests (208 fuzz + 16 teoremas).
+Estado: v0.6.1 -- 21 modulos libreria, 6 playgrounds, 12 teoremas verificados, 208 tests fuzz.
 
 ## Build
 
 ```bash
 cd Quantum4Lean
-lake build quantum4lean-test && ./build/bin/quantum4lean-test
+lake build quantum4lean-test && .lake/build/bin/quantum4lean-test
 ```
 
-Cero dependencias externas. Solo requiere Lean 4 (v4.7.0).
+Cero dependencias externas. Requiere Lean 4.31.0 (`lean-toolchain`).
 
 ## Arquitectura
 
 ```
-                    Quantum4Lean.lean (modulo principal)
-                            |
-    +-------+-------+-------+-------+-------+-------+-------+-------+-------+
-    |       |       |       |       |       |       |       |       |       |
-   Core   Error  Engine  Fuzz  Unitary  Obs    VQE    QAOA  Diophantine  Polynomial
-                                                    (Ising)
-    |       |       |       |
-   DSL   Tactic   Simp  Transpile  Clifford
+Quantum4Lean (21 modulos)
+  Core, Error, Engine, Fuzz, Unitary, Observable, VQE, QAOA,
+  Diophantine, Polynomial, Solver, Simp, Transpile, Clifford,
+  Verify, DSL, Tactic, FFI, QASM, Density, Runner
 
-Quantum4LeanPlayground/          -- Demostraciones (5 modulos)
-+-- QuantumPlaygroundDiophantine  -- Solver diofantino
-+-- QuantumPlaygroundBeal         -- Conjetura de Beal
+Quantum4LeanPlayground (6 demos)
+  Diophantine, Beal, Tijdeman, Riemann, TRDU, FFI
+```
 +-- QuantumPlaygroundTijdeman     -- Tijdeman QAOA
 +-- QuantumPlaygroundRiemann      -- Riemann + Cuantica
 +-- QuantumPlaygroundTRDU         -- TRDU-Q
@@ -40,7 +36,7 @@ import Quantum4Lean
 open Quantum4Lean.DSL.Shortcuts
 
 -- Circuito Bell con DSL declarativo
-def bell : Circuit 2 := circuit\! {
+def bell : Circuit 2 := circuit! {
   H q[0];
   CNOT q[0] q[1]
 }
@@ -73,7 +69,7 @@ example : circuitsEquiv
 | Verificacion | `compile`, `circuitsEquiv`, `circuit_equiv` (tactica) |
 | Clifford | `cliffordEquiv`, `CliffordAmplitude`, `CliffordMatrix` |
 | Optimizacion | `simplifyCircuit`, `optimizeCircuit`, `verifyOptimization` |
-| DSL | `circuit\! { ... }`, `q[i]`, `H`, `X`, `CNOT`, ... (Shortcuts) |
+| DSL | `circuit! { ... }`, `q[i]`, `H`, `X`, `CNOT`, ... (Shortcuts) |
 | Fuzzer circuitos | `FuzzConfig`, `FuzzReport`, `runFullSuite` |
 | Fuzzer diofantino | `DiophantineFuzz.generateWithSolution`, `runFuzz`, `report` |
 | Diofantico | `Diophantine`, `toIsing`, `diophantineSolve`, `checkSolution` |
@@ -83,13 +79,13 @@ example : circuitsEquiv
 
 ```lean
 -- Con nombres completos (siempre disponible)
-def bell : Circuit 2 := circuit\! {
+def bell : Circuit 2 := circuit! {
   Gate.H q[0];
   Gate.CNOT q[0] q[1]
 }
 
 -- Con alias cortos (requiere `open Quantum4Lean.DSL.Shortcuts`)
-def ghz3 : Circuit 3 := circuit\! {
+def ghz3 : Circuit 3 := circuit! {
   H q[0];
   CNOT q[0] q[1];
   CNOT q[1] q[2]

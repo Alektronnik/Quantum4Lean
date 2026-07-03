@@ -20,8 +20,11 @@ v0.6.1. Julio 2026.
 14. [Traductor Polinomico](#14-traductor-polinomico)
 15. [ADAM Optimizer](#15-adam-optimizer)
 16. [Playground](#16-playground)
-17. [API de Referencia](#17-api-de-referencia)
-18. [Arquitectura del Proyecto](#18-arquitectura-del-proyecto)
+17. [Exportador OpenQASM 3.0](#17-exportador-openqasm-30)
+18. [Density Matrix y Canales de Ruido](#18-density-matrix-y-canales-de-ruido)
+19. [Puente FFI (Apple Silicon / Metal 3)](#19-puente-ffi-apple-silicon--metal-3)
+20. [API de Referencia](#20-api-de-referencia)
+21. [Arquitectura del Proyecto](#21-arquitectura-del-proyecto)
 
 ---
 
@@ -39,7 +42,11 @@ Quantum4Lean es una plataforma de computacion cuantica verificada en Lean 4. Pro
 - **Transpilador verificado**: optimizacion con preservacion de semantica
 - **Fuzzer intra-Lean**: tests algebraicos + aleatorios
 - **DSL declarativo**: `circuit! { H q[0]; CNOT q[0] q[1] }`
+- **Exportador OpenQASM 3.0**: circuitos verificados a formato ejecutable en IBM/AWS
+- **Density Matrix + Ruido**: simulacion de decoherencia para era NISQ
+- **Puente FFI**: motor C++/Metal 3 para hasta 30 qubits
 - **Cero dependencias externas**: `lake build quantum4lean-test` + `./.lake/build/bin/quantum4lean-test`
+- **Lean 4.31.0** compatible
 
 ### Filosofia
 
@@ -806,7 +813,120 @@ Solucion dedicada de $x^2 = y^3 + 1$ via QAOA con ansatz optimizado.
 
 ---
 
-## 17. API de Referencia
+## 17. Exportador OpenQASM 3.0
+
+El modulo `Quantum4LeanQASM` exporta cualquier `Circuit n` a OpenQASM 3.0,
+el formato estandar para ejecucion en hardware cuantico real (IBM Quantum, AWS Braket).
+
+Las 13 puertas del catalogo tienen equivalencia directa:
+
+| Puerta | OpenQASM 3.0 |
+|--------|---------------|
+| `H q` | `h q[N];` |
+| `X q` | `x q[N];` |
+| `Y q` | `y q[N];` |
+| `Z q` | `z q[N];` |
+| `S q` | `s q[N];` |
+| `T q` | `t q[N];` |
+| `CNOT c t` | `cx q[C], q[T];` |
+| `CZ c t` | `cz q[C], q[T];` |
+| `SWAP a b` | `swap q[A], q[B];` |
+| `RX q theta` | `rx(theta) q[N];` |
+| `RY q theta` | `ry(theta) q[N];` |
+| `RZ q theta` | `rz(theta) q[N];` |
+| `Unitary q m` | no soportado (comentario WARNING) |
+
+Uso:
+
+```lean
+import Quantum4Lean.QASM
+
+def bell : Circuit 2 := ...
+#eval circuitToQASM bell "bell_state"
+-- // OpenQASM 3.0 generado por Quantum4Lean
+-- OPENQASM 3.0;
+-- include "stdgates.inc";
+-- qubit[2] q;
+--   h q[0];
+--   cx q[0], q[1];
+
+-- Exportar a archivo:
+#eval exportCircuit bell "bell.qasm" "bell_state"
+```
+
+---
+
+## 18. Density Matrix y Canales de Ruido
+
+El modulo `Quantum4LeanDensity` implementa el formalismo de matrices de densidad
+para simulacion de sistemas cuanticos abiertos (era NISQ).
+
+### DensityMatrix n
+
+Matriz 2^n x 2^n, Hermitica, traza 1. Representacion plana en `Array Float`
+(real/imag interleaved). Maximo 5 qubits (1024 complejos, ~16 KB).
+
+Operaciones:
+- `DensityMatrix.init n` — estado puro |0...0><0...0|
+- `applyGate rho gate` — aplica U rho U^dagger (13 puertas)
+- `runCircuit rho circuit` — ejecuta circuito completo
+- `trace rho` — traza (debe ser ~1.0)
+
+### Canales de Ruido CPTP
+
+| Canal | Formula | Parametro | Modela |
+|-------|---------|-----------|--------|
+| `depolarize` | rho -> (1-p) rho + p I/d | p in [0,1] | Ruido isotropico |
+| `amplitudeDamping` | Kraus E0, E1 | gamma in [0,1] | Relajacion T1 |
+| `phaseDamping` | rho -> (1-lambda) rho + lambda Z rho Z | lambda in [0,1] | Defase T2 |
+
+Uso:
+
+```lean
+import Quantum4Lean.Density
+
+let rho <- DensityMatrix.init 2
+let rho := DensityMatrix.applyGate rho (Gate.H q0)
+let rho := DensityMatrix.depolarize rho 0.01
+let rho := DensityMatrix.amplitudeDamping rho 0 0.05
+```
+
+---
+
+## 19. Puente FFI (Apple Silicon / Metal 3)
+
+El puente FFI conecta Quantum4Lean con el motor C++/Metal 3 (CoreQU4TRIX)
+para simulaciones de hasta 30 qubits en hardware Apple Silicon.
+
+### Arquitectura
+
+```
+Lean 4 (Quantum4LeanFFI.lean)
+  -> @[extern] quantum4LeanInit / ApplyGate / Measure
+  -> FloatArray (memoria compartida)
+C (Quantum4LeanBridge.c)
+  -> llama a qu4trix_* API
+C++ (QuantumKitCore.mm)
+  -> Motor Metal 3 en GPU Apple Silicon
+```
+
+### Compilacion
+
+```bash
+bash build_ffi.sh
+# Genera libQuantum4LeanFFI.a (30 KB)
+```
+
+### Estado actual
+
+La libreria C++ compila correctamente. El enlace con el ejecutable Lean
+requiere que `ld64.lld` (linker bundled de Lean) soporte `-framework Metal`
+y `-framework Foundation`. El linker actual no lo soporta.
+Infraestructura lista para cuando Lake/Lean lo habilite.
+
+---
+
+## 20. API de Referencia
 
 ### Tipos publicos
 
@@ -952,7 +1072,7 @@ Disponibles tras `import Quantum4Lean`. No requieren `open`.
 
 ---
 
-## 18. Arquitectura del Proyecto
+## 21. Arquitectura del Proyecto
 
 ```
 Quantum4Lean/
@@ -974,6 +1094,9 @@ Quantum4Lean/
 |   +-- Quantum4LeanDiophantine.lean-- Traductor diofantino lineal
 |   +-- Quantum4LeanPolynomial.lean -- Traductor polinomico
 |   +-- Quantum4LeanSolver.lean     -- Utilidades compartidas
+|   +-- Quantum4LeanVerify.lean     -- Verificacion formal de circuitos
+|   +-- Quantum4LeanQASM.lean       -- Exportador OpenQASM 3.0
+|   +-- Quantum4LeanDensity.lean    -- Density Matrix + ruido NISQ
 |   +-- Quantum4LeanRunner.lean    -- Ejecutable de tests
 +-- Quantum4LeanPlayground.lean    -- Root del Playground
 +-- Quantum4LeanPlayground/
@@ -984,7 +1107,7 @@ Quantum4Lean/
 |   +-- QuantumPlaygroundTRDU.lean        -- TRDU
 |   +-- QuantumPlaygroundFFI.lean         -- FFI (Metal 3)
 +-- .github/workflows/ci.yml       -- Integracion Continua
-+-- lakefile.lean                  -- Build autocontenido
++-- lakefile.lean                  -- Build (Lean 4.31.0)
 +-- README.md                      -- Documentacion
 +-- MANUAL.md                      -- Este manual
 ```
