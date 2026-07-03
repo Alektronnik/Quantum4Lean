@@ -1,5 +1,5 @@
 #!/bin/bash
-# build_cpu_ffi.sh
+# buildCPU.sh
 # Compila el motor C++ en modo CPU-only (sin Metal, sin Foundation).
 # La libreria resultante enlaza con ld64.lld (linker bundled de Lean).
 #
@@ -7,7 +7,7 @@
 # Salida: libQuantum4LeanCPU.a en la raiz del proyecto.
 #
 # Uso:
-#   bash build_cpu_ffi.sh && lake build quantum4lean-ffi
+#   bash buildCPU.sh && lake build quantum4lean-ffi
 #   .lake/build/bin/quantum4lean-ffi
 
 set -e
@@ -44,6 +44,7 @@ ls -lh "$OUTPUT"
 
 echo ""
 echo "Para compilar y ejecutar Quantum4Lean con FFI (CPU):"
-echo "  lake build quantum4lean-ffi && .lake/build/bin/quantum4lean-ffi"
+echo "  bash buildCPU.sh && lake build quantum4lean-ffi"
+echo "  .lake/build/bin/quantum4lean-ffi"
 echo ""
 echo "NOTA: Motor CPU-only, hasta 30 qubits. Sin dependencias de Metal."

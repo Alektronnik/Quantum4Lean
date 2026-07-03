@@ -5,8 +5,8 @@ Playground: Beal a 20-30 qubits via FFI (Apple Silicon / Metal 3).
 Pipeline: polyToIsing -> FFI Engine (C++/Metal, hasta 30q) -> Medicion.
 
 Requisito: libQuantum4LeanCPU.a o libQuantum4LeanMetal.a compilada.
-  bash build_cpu_ffi.sh   (CPU)
-  bash build_metal_ffi.sh (Metal GPU)
+  bash buildCPU.sh   (CPU)
+  bash buildMetal.sh (Metal GPU)
 -/
 
 import Quantum4Lean
