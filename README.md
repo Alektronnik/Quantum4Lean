@@ -69,7 +69,7 @@ example : circuitsEquiv
 | Pauli | `Pauli`, `PauliString`, `Observable` |
 | Ejecucion | `executeSim`, `executeSimProbs` |
 | Expectacion | `expect`, `expectPauliString`, `expectZ`, `expectX`, `expectY` |
-| VQE | `vqe`, `isingAnsatz`, `gradient`, `parameterShiftGradient` |
+| VQE | `vqe`, `adamVQE`, `isingAnsatz`, `gradient`, `parameterShiftGradient` |
 | QAOA | `qaoaIsing`, `qaoaIsingCircuit`, `qaoaMixingLayer` |
 | Verificacion | `compile`, `circuitsEquiv`, `circuit_equiv` (tactica) |
 | Clifford | `cliffordEquiv`, `CliffordAmplitude`, `CliffordMatrix` |
@@ -195,6 +195,22 @@ Motor C++/Metal hasta 30 qubits. Requiere `bash build_ffi.sh`.
 
 ```lean
 #eval Quantum4LeanPlayground.FFI.report
+```
+
+### Fuzzer Diofantino (QuantumPlaygroundFuzz)
+
+Genera ecuaciones aleatorias con soluciones conocidas y verifica:
+
+```lean
+#eval Quantum4LeanPlayground.Fuzz.report
+```
+
+### ADAM Optimizer
+
+VQE con optimizador ADAM (momentum + learning rate adaptativo).
+
+```lean
+let (energy, params, history) := adamVQE ansatz H initialParams 0.01 200
 ```
 
 ### Tijdeman Cuantico
