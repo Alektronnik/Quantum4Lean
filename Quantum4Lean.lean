@@ -17,6 +17,7 @@ Modulos activos:
   Quantum4LeanPolynomial  Traductor polinomico (monomios <= 3)
   Quantum4LeanSolver      Utilidades compartidas
   Quantum4LeanVerify      Verificacion formal de circuitos
+  Quantum4LeanQASM        Exportador OpenQASM 3.0
 -/
 
 import Quantum4Lean.Quantum4LeanCore
@@ -36,6 +37,8 @@ import Quantum4Lean.Quantum4LeanTactic
 import Quantum4Lean.Quantum4LeanPolynomial
 import Quantum4Lean.Quantum4LeanSolver
 import Quantum4Lean.Quantum4LeanVerify
+import Quantum4Lean.Quantum4LeanQASM
+import Quantum4Lean.Quantum4LeanDensity
 
 export Quantum4Lean (Qubit Gate Circuit StateVector
   executeSim executeSimProbs
