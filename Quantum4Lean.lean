@@ -48,7 +48,7 @@ export Quantum4Lean (Qubit Gate Circuit StateVector
   CliffordAmplitude CliffordMatrix compileClifford cliffordEquiv
   Pauli PauliString Observable
   expect expectPauliString expectZ expectX expectY
-  vqe isingAnsatz gradient parameterShiftGradient
+  vqe isingAnsatz gradient parameterShiftGradient adamVQE adamStep
   qaoaIsing qaoaIsingCircuit qaoaMixingLayer
   simplifyCircuit simplificationSavings
   optimizeCircuit optimizationSavings

@@ -136,6 +136,89 @@ def vqe {n : Nat} (ansatz : List Float -> Circuit n) (obs : Observable)
   vqeLoop ansatz obs initialParams learningRate maxIter tolerance 0 0.0 []
 
 -- ===================================================================
+-- ADAM Optimizer
+-- ===================================================================
+
+/-- Suma elemento a elemento: [a,b] + [c,d] = [a+c, b+d]. --/
+private def listAdd (xs ys : List Float) : List Float :=
+  xs.zip ys |>.map fun (x, y) => x + y
+
+/-- Resta elemento a elemento. --/
+private def listSub (xs ys : List Float) : List Float :=
+  xs.zip ys |>.map fun (x, y) => x - y
+
+/-- Multiplica cada elemento por un escalar. --/
+private def listScale (xs : List Float) (s : Float) : List Float :=
+  xs.map fun x => x * s
+
+/-- Multiplica elemento a elemento. --/
+private def listMul (xs ys : List Float) : List Float :=
+  xs.zip ys |>.map fun (x, y) => x * y
+
+/-- Divide elemento a elemento, con epsilon para evitar division por cero. --/
+private def listDivEps (xs ys : List Float) (eps : Float) : List Float :=
+  xs.zip ys |>.map fun (x, y) => x / (y + eps)
+
+/-- Raiz cuadrada elemento a elemento. --/
+private def listSqrt (xs : List Float) : List Float :=
+  xs.map Float.sqrt
+
+/-- Paso ADAM: actualiza parametros, momentos y varianzas. --/
+def adamStep (params m v : List Float) (grad : List Float) (lr : Float)
+    (beta1 beta2 eps : Float) (t : Nat) : List Float × List Float × List Float :=
+  let k := params.length
+  -- Actualizar momentos
+  let newM := listAdd (listScale m beta1) (listScale grad (1.0 - beta1))
+  let newV := listAdd (listScale v beta2) (listScale (listMul grad grad) (1.0 - beta2))
+  -- Correccion de sesgo: m_hat = m / (1 - beta1^t), v_hat = v / (1 - beta2^t)
+  let beta1t := (List.range t).foldl (fun acc _ => acc * beta1) 1.0
+  let beta2t := (List.range t).foldl (fun acc _ => acc * beta2) 1.0
+  let corr1 := 1.0 - beta1t
+  let corr2 := 1.0 - beta2t
+  let mHat := listScale newM (1.0 / corr1)
+  let vHat := listScale newV (1.0 / corr2)
+  -- Actualizar parametros: theta = theta - lr * mHat / (sqrt(vHat) + eps)
+  let update := listDivEps mHat (listSqrt vHat) eps
+  let newParams := listSub params (listScale update lr)
+  (newParams, newM, newV)
+
+/--
+Bucle VQE con ADAM. Lleva momentos m, v y contador t.
+-/
+partial def adamVQELoop {n : Nat} (ansatz : List Float -> Circuit n) (obs : Observable)
+    (params m v : List Float) (lr : Float) (beta1 beta2 eps : Float)
+    (maxIter : Nat) (tolerance : Float) (t : Nat)
+    (prevEnergy : Float) (history : List Float)
+    : Float × List Float × List Float :=
+  if t >= maxIter then
+    (prevEnergy, params, history.reverse)
+  else
+    let energy := evalCircuit ansatz obs params
+    let newHistory := energy :: history
+    if t > 0 && (energy - prevEnergy).abs < tolerance then
+      (energy, params, newHistory.reverse)
+    else
+      let grad := gradient ansatz obs params
+      let (newParams, newM, newV) := adamStep params m v grad lr beta1 beta2 eps (t + 1)
+      adamVQELoop ansatz obs newParams newM newV lr beta1 beta2 eps
+        maxIter tolerance (t + 1) energy newHistory
+
+/--
+VQE con optimizador ADAM.
+
+Parametros por defecto: lr=0.01, beta1=0.9, beta2=0.999, eps=1e-8.
+-/
+def adamVQE {n : Nat} (ansatz : List Float -> Circuit n) (obs : Observable)
+    (initialParams : List Float) (learningRate : Float := 0.01)
+    (maxIter : Nat := 100) (tolerance : Float := 1e-6)
+    : Float × List Float × List Float :=
+  let k := initialParams.length
+  let m0 := List.replicate k 0.0
+  let v0 := List.replicate k 0.0
+  adamVQELoop ansatz obs initialParams m0 v0 learningRate 0.9 0.999 1e-8
+    maxIter tolerance 0 0.0 []
+
+-- ===================================================================
 -- Ansatz de Ising 1D
 -- ===================================================================
 
