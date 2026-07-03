@@ -2,10 +2,7 @@
 QuantumPlaygroundBeal.lean
 Conjetura de Beal: a^x + b^y = c^z con gcd(a,b,c) > 1.
 
-Busqueda masiva de contraejemplos via polyToIsing + busqueda exhaustiva.
-Escalas: pequeña (12 qubits), grande (19 qubits).
-
-Dependencias: Quantum4Lean, QuantumPlaygroundCommon.
+5 casos en 3 escalas de busqueda exhaustiva.
 -/
 
 import Quantum4Lean
@@ -22,104 +19,50 @@ private def gcd3 (a b c : Int) : Int :=
   let absC := if c >= 0 then c else -c
   (absA.gcd absB).gcd absC
 
-def evalBealCost (a b c : Int) : Float :=
-  let af := intToFloat a
-  let bf := intToFloat b
-  let cf := intToFloat c
-  let diff := af*af*af + bf*bf*bf - cf*cf
-  diff * diff
-
-def smallCaseEq : PolyEquation := {
-  monomials := [
-    { coefficient := 1,  exponents := [(0, 3)] },
-    { coefficient := 1,  exponents := [(1, 3)] },
-    { coefficient := -1, exponents := [(2, 2)] }
-  ],
-  constant := 0,
-  varBits := [4, 4, 5]
-}
-
-def smallCaseReport : String :=
-  let totalQubits := polyTotalQubits smallCaseEq
+/-- Genera reporte para una ecuacion Beal generica. --/
+private def caseReport (name : String) (aExp bExp cExp : Nat) (bitsA bitsB bitsC : Nat) : String :=
+  let eq : PolyEquation := {
+    monomials := [
+      { coefficient := 1,  exponents := [(0, aExp)] },
+      { coefficient := 1,  exponents := [(1, bExp)] },
+      { coefficient := -1, exponents := [(2, cExp)] }
+    ],
+    constant := 0,
+    varBits := [bitsA, bitsB, bitsC]
+  }
+  let totalQubits := polyTotalQubits eq
   let dim := 1 <<< totalQubits
   let results := (List.range dim).filterMap fun state =>
-    let vals := decodeState smallCaseEq.varBits state
+    let vals := decodeState eq.varBits state
     let a := vals.get\! 0
     let b := vals.get\! 1
     let c := vals.get\! 2
-    let cost := evalBealCost a b c
-    if cost < 1e-6 then some (a, b, c, gcd3 a b c) else none
+    let af := intToFloat a; let bf := intToFloat b; let cf := intToFloat c
+    let aPow := (List.range aExp).foldl (fun (acc : Float) _ => acc * af) 1.0
+    let bPow := (List.range bExp).foldl (fun (acc : Float) _ => acc * bf) 1.0
+    let cPow := (List.range cExp).foldl (fun (acc : Float) _ => acc * cf) 1.0
+    let diff := aPow + bPow - cPow
+    if diff.abs < 1e-6 then some (a, b, c, gcd3 a b c) else none
   let gcd1 := results.filter fun (_, _, _, g) => g == 1
   let gcdGt1 := results.filter fun (_, _, _, g) => g > 1
-  s\!"Beal a^3 + b^3 = c^2 (12 qubits: a,b in 0..15, c in 0..31)\n" ++
-  s\!"Soluciones exactas: {results.length}\n" ++
-  s\!"Con gcd=1 (contraejemplos): {gcd1.length}\n" ++
-  (if gcd1.isEmpty then "  NINGUNA. Beal se mantiene.\n"
-   else String.intercalate "\n" (gcd1.map fun (a,b,c,_) => s\!"  a={a}, b={b}, c={c}") ++ "\n") ++
-  s\!"Con gcd>1 (cumplen Beal): {gcdGt1.length}"
+  let desc := s\!"a^{aExp} + b^{bExp} = c^{cExp}"
+  s\!"[{name}] {desc} ({totalQubits} qubits)\n" ++
+  s\!"  Soluciones: {results.length} | gcd=1: {gcd1.length} | gcd>1: {gcdGt1.length}\n" ++
+  (if gcd1.isEmpty then "  Beal se mantiene.\n"
+   else "  CONTRAEJEMPLOS: " ++ String.intercalate " | " (gcd1.map fun (a,b,c,_) => s\!"({a},{b},{c})") ++ "\n") ++
+  (if gcdGt1.length <= 5 then
+    "  Cumplen: " ++ String.intercalate " | " (gcdGt1.map fun (a,b,c,g) => s\!"({a},{b},{c}) g={g}") ++ "\n"
+   else s\!"  Cumplen: {gcdGt1.length} soluciones (primeras 5 mostradas)\n")
 
-def mixedCaseEq : PolyEquation := {
-  monomials := [
-    { coefficient := 1, exponents := [(0, 3)] },
-    { coefficient := 1, exponents := [(1, 2)] },
-    { coefficient := -1, exponents := [(2, 3)] }
-  ],
-  constant := 0,
-  varBits := [3, 4, 3]
-}
-
-def mixedCaseReport : String :=
-  let totalQubits := polyTotalQubits mixedCaseEq
-  let dim := 1 <<< totalQubits
-  let results := (List.range dim).filterMap fun state =>
-    let vals := decodeState mixedCaseEq.varBits state
-    let a := vals.get\! 0
-    let b := vals.get\! 1
-    let c := vals.get\! 2
-    let cost := evalBealCost a b c
-    if cost < 1e-6 then some (a, b, c, gcd3 a b c) else none
-  s\!"Beal a^3 + b^2 = c^3 (9 qubits: a,c in 0..7, b in 0..15)\n" ++
-  s\!"Soluciones exactas: {results.length}\n" ++
-  (if results.isEmpty then "  Ninguna encontrada en este rango.\n"
-   else String.intercalate "\n" (results.map fun (a,b,c,g) =>
-     s\!"  a={a}, b={b}, c={c} (gcd={g})") ++ "\n")
-
-def largeCaseEq : PolyEquation := {
-  monomials := [
-    { coefficient := 1,  exponents := [(0, 3)] },
-    { coefficient := 1,  exponents := [(1, 3)] },
-    { coefficient := -1, exponents := [(2, 2)] }
-  ],
-  constant := 0,
-  varBits := [6, 6, 7]
-}
-
-def largeCaseReport : String :=
-  let totalQubits := polyTotalQubits largeCaseEq
-  let dim := 1 <<< totalQubits
-  let results := (List.range dim).filterMap fun state =>
-    let vals := decodeState largeCaseEq.varBits state
-    let a := vals.get\! 0
-    let b := vals.get\! 1
-    let c := vals.get\! 2
-    let cost := evalBealCost a b c
-    if cost < 1e-6 then some (a, b, c, gcd3 a b c) else none
-  let gcd1 := results.filter fun (_, _, _, g) => g == 1
-  let gcdGt1 := results.filter fun (_, _, _, g) => g > 1
-  s\!"Beal a^3 + b^3 = c^2 (19 qubits: a,b in 0..63, c in 0..127)\n" ++
-  s\!"Espacio: {dim} estados, evaluados exhaustivamente.\n" ++
-  s\!"Soluciones exactas totales: {results.length}\n" ++
-  s\!"Soluciones con gcd=1 (contraejemplos): {gcd1.length}\n" ++
-  (if gcd1.isEmpty then "  NINGUNA. Beal se mantiene en este rango.\n"
-   else String.intercalate "\n" (gcd1.map fun (a,b,c,_) => s\!"  a={a}, b={b}, c={c}") ++ "\n") ++
-  s\!"Soluciones con gcd>1 (cumplen Beal): {gcdGt1.length}\n" ++
-  (if gcdGt1.length <= 10 then
-    String.intercalate "\n" (gcdGt1.map fun (a,b,c,g) => s\!"  a={a}, b={b}, c={c} (gcd={g})")
-   else s\!"  (primeras 10 de {gcdGt1.length})")
+def smallCase  := caseReport "Beal 3+3=2" 3 3 2 4 4 5
+def mixedCase  := caseReport "Beal 3+2=3" 3 2 3 3 4 3
+def altCase    := caseReport "Beal 2+3=3" 2 3 3 4 5 4
+def tripleCase := caseReport "Beal 3+3=3" 3 3 3 4 4 4
+def largeCase  := caseReport "Beal 3+3=2 L" 3 3 2 6 6 7
 
 def report : String :=
   "Beal -- Conjetura de Beal (a^x + b^y = c^z)\n" ++
   "==========================================\n\n" ++
-  smallCaseReport ++ "\n\n" ++ mixedCaseReport ++ "\n\n" ++ largeCaseReport
+  String.intercalate "\n" [smallCase, mixedCase, altCase, tripleCase, largeCase]
 
 end Quantum4LeanPlayground.Beal
