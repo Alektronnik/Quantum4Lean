@@ -5,6 +5,7 @@ mark: Foundational Manuscript
 author: Bezalel Izquierdo Pérez (Alektronnik)
 orcid: 0009-0001-5993-4057
 repo: github.com/Alektronnik/Quantum4Lean
+doi: 10.5281/zenodo.21197538
 version: v0.8.0
 date: July 2026
 keywords: quantum computing, lean4, formal verification, Apple Silicon, Metal 3, VQE, QAOA, topology, Hodge, Riemann, Tijdeman, TRDU

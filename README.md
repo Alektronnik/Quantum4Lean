@@ -1,5 +1,6 @@
 # Quantum4Lean
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21197538.svg)](https://doi.org/10.5281/zenodo.21197538)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Lean 4](https://img.shields.io/badge/Lean-4.31.0-green.svg)](https://leanprover.github.io/)
 
@@ -313,6 +314,7 @@ If you use Quantum4Lean in your research, please cite:
   title   = {Quantum4Lean: Verified Quantum Computing on Apple Silicon},
   author  = {Izquierdo P\'erez, Bezalel},
   orcid   = {0009-0001-5993-4057},
+  doi     = {10.5281/zenodo.21197538},
   year    = {2026},
   version = {v0.8.0},
   url     = {https://github.com/Alektronnik/Quantum4Lean}
