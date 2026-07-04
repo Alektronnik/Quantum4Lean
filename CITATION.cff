@@ -1,0 +1,34 @@
+cff-version: 1.2.0
+message: "If you use Quantum4Lean in your research, please cite it as follows."
+title: "Quantum4Lean: Verified Quantum Computing on Apple Silicon"
+version: 0.8.0
+date-released: 2026-07-04
+authors:
+  - family-names: Izquierdo Pérez
+    given-names: Bezalel
+    orcid: "https://orcid.org/0009-0001-5993-4057"
+    alias: Alektronnik
+repository-code: "https://github.com/Alektronnik/Quantum4Lean"
+url: "https://github.com/Alektronnik/Quantum4Lean"
+abstract: >
+  Quantum4Lean is a verified quantum computing infrastructure in Lean 4.31.0.
+  It combines dependent types, circuits safe by construction, exact theorems
+  for the Clifford fragment, and computational verification of universal circuits.
+  Built on a complete NISQ stack — StateVector, Observables, VQE, QAOA, Density
+  Matrix, Jordan-Wigner, quantum chemistry — it includes translators from
+  Diophantine equations and polynomial systems to Ising Hamiltonians, and an
+  optional FFI backend to C++/Metal on Apple Silicon for up to 25 qubits.
+keywords:
+  - quantum computing
+  - formal verification
+  - Lean 4
+  - NISQ
+  - VQE
+  - QAOA
+  - Apple Silicon
+  - Metal GPU
+  - Clifford verification
+  - Diophantine equations
+  - topology
+license: Apache-2.0
+type: software

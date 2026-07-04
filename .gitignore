@@ -2,6 +2,11 @@
 .lake/
 build/
 
+# Generated files
+*.pdf
+*.tar.gz
+*.a
+
 # IDE
 .vscode/
 
